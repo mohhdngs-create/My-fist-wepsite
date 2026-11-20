@@ -1,0 +1,214 @@
+/*
+ * styles.css - Custom Styles & Arabized Typography
+ * School Attendance & Student Management Application
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap');
+
+:root {
+    --navy-900: #0b1329;
+    --navy-800: #132247;
+    --navy-700: #1b356d;
+    --navy-600: #254a9c;
+    --sky-500: #0284c7;
+    --sky-400: #38bdf8;
+    --sky-100: #e0f2fe;
+    --sky-50: #f0f9ff;
+    --emerald-600: #059669;
+    --emerald-500: #10b981;
+    --emerald-50: #ecfdf5;
+    --coral-600: #dc2626;
+    --coral-500: #ef4444;
+    --coral-50: #fef2f2;
+    --amber-500: #f59e0b;
+    --amber-50: #fffbeb;
+    --font-cairo: 'Cairo', system-ui, -apple-system, sans-serif;
+    --font-tajawal: 'Tajawal', sans-serif;
+}
+
+body {
+    font-family: var(--font-cairo);
+    background-color: #f8fafc;
+    color: #1e293b;
+    direction: rtl;
+    text-align: right;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-heading {
+    font-family: var(--font-cairo);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Active status indicator buttons */
+.btn-status {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+}
+
+.btn-status:active {
+    transform: scale(0.96);
+}
+
+.btn-status-present.active {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    border-color: #059669 !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.btn-status-absent.active {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    border-color: #dc2626 !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+.btn-status-late.active {
+    background-color: #f59e0b !important;
+    color: #ffffff !important;
+    border-color: #d97706 !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+
+/* Glass effect */
+.glass-header {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Floating animation */
+@keyframes softPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+.animate-pulse-slow {
+    animation: softPulse 4s infinite ease-in-out;
+}
+
+/* Badge glow */
+.badge-present {
+    background-color: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+.badge-absent {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+.badge-late {
+    background-color: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+.badge-unrecorded {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+/* Calendar styling for parent portal */
+.calendar-day-box {
+    aspect-ratio: 1;
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.calendar-day-box:hover {
+    transform: translateY(-2px);
+}
+
+.calendar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    margin-top: 3px;
+}
+
+/* Toast container */
+#toast-container {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.toast-item {
+    pointer-events: auto;
+    animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+    .no-print, header, nav, #toast-container, .modal-backdrop, .action-buttons-cell, button {
+        display: none !important;
+    }
+    .print-only {
+        display: block !important;
+    }
+    .print-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        box-shadow: none !important;
+    }
+    table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+    th, td {
+        border: 1px solid #333 !important;
+        padding: 8px !important;
+        text-align: right !important;
+    }
+}
+
+.print-only {
+    display: none;
+}

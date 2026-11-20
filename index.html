@@ -1,57 +1,1032 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <title>نظام مدرستي | إدارة الحضور وسلوك الطلاب</title>
+    
+    <!-- Google Fonts: Cairo & Tajawal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- FontAwesome 6 Pro CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <title>Document</title>
+    
+    <!-- Tailwind CSS with custom configuration -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            50: '#f0f4fa',
+                            100: '#dce5f3',
+                            200: '#bccde8',
+                            600: '#254a9c',
+                            700: '#1b356d',
+                            800: '#132247',
+                            900: '#0b1329',
+                            950: '#060a17'
+                        },
+                        sky: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1'
+                        },
+                        emerald: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857'
+                        },
+                        coral: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c'
+                        },
+                        amber: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                        heading: ['Cairo', 'sans-serif'],
+                        tajawal: ['Tajawal', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
-    
-    <div class="section">
-    <h1>Hello every one</h1>
-    <p>We build digital experiences that elevate your brand to the next level</p>
-</div>
-    
-    <div class="container">
-    
-    
-    <div class="box1">
-    
-    <img src="2648.jpg">
-    
-    <h2>My Day</h2>
-    
-    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Minima blanditiis tempore velit in iure accusamus. Tempora eos officiis veniam alias.</p>
-    
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans selection:bg-sky-500 selection:text-white">
+
+    <!-- Global App Header (Visible when logged in) -->
+    <header id="main-app-header" class="hidden sticky top-0 z-40 glass-header border-b border-slate-200/80 shadow-xs no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-2.5 flex items-center justify-between gap-4">
+            <!-- School Brand & Title -->
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-navy-900 to-sky-600 flex items-center justify-center text-white shadow-md shadow-sky-600/20">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-extrabold text-navy-900 text-lg tracking-tight">نظام مدرستي</span>
+                        <span class="text-[11px] font-bold bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full border border-sky-200">النسخة الذكية</span>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium">مدرسة الأندلس النموذجية الابتدائية</p>
+                </div>
+            </div>
+
+            <!-- Current Arabic Date & Role Switcher & User Profile -->
+            <div class="flex items-center gap-3">
+                <!-- Date Pill -->
+                <div class="hidden md:flex items-center gap-2 bg-slate-100/80 px-3.5 py-1.5 rounded-xl border border-slate-200/60 text-xs font-semibold text-slate-600">
+                    <i class="fa-regular fa-calendar-check text-sky-600"></i>
+                    <span class="arabic-current-date">اليوم</span>
+                </div>
+
+                <!-- Role Switcher Button -->
+                <button type="button" 
+                    onclick="switchRole()"
+                    class="bg-navy-50 hover:bg-navy-100 text-navy-800 border border-navy-200 px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-2xs">
+                    <i class="fa-solid fa-repeat text-sky-600"></i>
+                    <span id="switch-role-btn-text">التبديل للبوابة الأخرى</span>
+                </button>
+
+                <!-- User Profile Badge & Logout -->
+                <div class="flex items-center gap-2 pr-2 border-r border-slate-200">
+                    <div class="text-left hidden sm:block">
+                        <div id="header-user-name" class="font-bold text-xs text-slate-900">المستخدم الحالي</div>
+                        <div class="mt-0.5">
+                            <span id="header-user-role" class="text-[10px] font-semibold">الدور</span>
+                        </div>
+                    </div>
+                    
+                    <button type="button" 
+                        onclick="logout()" 
+                        class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition"
+                        title="تسجيل الخروج">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dynamic Content Wrapper -->
+    <main class="flex-1 flex flex-col">
+
+        <!-- ============================================================== -->
+        <!-- VIEW 1: ROLE-BASED LOGIN & LANDING (تسجيل الدخول)            -->
+        <!-- ============================================================== -->
+        <section id="login-view" class="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-sky-50/60 via-slate-50 to-slate-100 relative overflow-hidden">
+            <!-- Decorative Background Glows -->
+            <div class="absolute -top-32 -right-32 w-96 h-96 bg-sky-200/40 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-navy-200/30 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="w-full max-w-xl relative z-10 flex flex-col gap-6">
+                <!-- Brand Emblem & Header -->
+                <div class="text-center flex flex-col items-center">
+                    <div class="w-18 h-18 rounded-3xl bg-gradient-to-tr from-navy-900 via-navy-800 to-sky-600 flex items-center justify-center text-white shadow-xl shadow-navy-900/15 mb-4 transform hover:scale-105 transition-transform duration-300">
+                        <i class="fa-solid fa-graduation-cap text-3xl"></i>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-navy-900 tracking-tight">نظام مدرستي لإدارة الحضور والسلوك</h1>
+                    <p class="text-sm text-slate-500 mt-2 max-w-md font-medium">المنصة التعليمية الذكية لرصد حضور الطلاب والتواصل الفوري مع أولياء الأمور</p>
+                </div>
+
+                <!-- Main Login Card with Role Tabs -->
+                <div class="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/50 p-6 sm:p-8">
+                    <!-- Role Switch Tabs -->
+                    <div class="grid grid-cols-2 p-1.5 bg-slate-100 rounded-2xl mb-6">
+                        <button type="button" id="tab-btn-teacher" class="py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 bg-navy-800 text-white shadow-sm">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                            <span>دخول المعلمين والإدارة</span>
+                        </button>
+                        <button type="button" id="tab-btn-parent" class="py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900">
+                            <i class="fa-solid fa-users"></i>
+                            <span>دخول أولياء الأمور</span>
+                        </button>
+                    </div>
+
+                    <!-- Teacher Login Form -->
+                    <form id="form-teacher-login" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">البريد الإلكتروني أو اسم المستخدم</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-regular fa-envelope"></i>
+                                </div>
+                                <input type="text" id="teacher-email" required
+                                    value="abdullah.almansoor@school.edu.sa"
+                                    class="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition" 
+                                    placeholder="أدخل البريد أو المعرف...">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-slate-700">كلمة المرور</label>
+                                <a href="javascript:void(0)" class="text-xs font-semibold text-sky-600 hover:underline">نسيت كلمة المرور؟</a>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-lock"></i>
+                                </div>
+                                <input type="password" required value="••••••••"
+                                    class="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked class="rounded border-slate-300 text-sky-600 focus:ring-sky-500">
+                                <span>تذكر بياناتي في هذا المتصفح</span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 px-4 bg-navy-800 hover:bg-navy-900 text-white rounded-xl text-sm font-bold shadow-md shadow-navy-900/20 transition flex items-center justify-center gap-2">
+                            <span>تسجيل الدخول إلى لوحة المعلم</span>
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                    </form>
+
+                    <!-- Parent Login Form (Initially Hidden) -->
+                    <form id="form-parent-login" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">رقم جوال ولي الأمر (المسجل لدى المدرسة)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-mobile-screen-button"></i>
+                                </div>
+                                <input type="tel" id="parent-phone" required
+                                    value="0501234567"
+                                    class="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition" 
+                                    placeholder="مثال: 0501234567">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">رمز الدخول أو رقم هوية الطالب</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-id-card"></i>
+                                </div>
+                                <input type="text" value="1098452310"
+                                    class="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition" 
+                                    placeholder="رقم هوية الطالب أو كود التحقق">
+                            </div>
+                        </div>
+
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            <i class="fa-solid fa-circle-info text-sky-500 ml-1"></i>
+                            يمكنك الدخول مباشرة باستخدام رقم الجوال المعتمد لدى إدارة المدرسة لمتابعة حضور وملاحظات أبنائك.
+                        </p>
+
+                        <button type="submit" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                            <span>الدخول إلى بوابة ولي الأمر</span>
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                    </form>
+
+                    <!-- Fast Demo / Quick-Login Options -->
+                    <div class="mt-8 pt-6 border-t border-slate-100">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-wand-magic-sparkles text-sky-500 text-xs"></i>
+                            <span class="text-xs font-bold text-slate-600">معاينة وتجربة سريعة (ضغطة واحدة):</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <button type="button" 
+                                onclick="loginAsTeacher('أ. عبد الله المنصور', 'c4a')"
+                                class="p-3 text-right bg-sky-50/70 hover:bg-sky-100/70 border border-sky-200/80 rounded-xl transition flex items-center gap-3 group">
+                                <div class="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center text-xs shrink-0 group-hover:scale-105 transition-transform">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="text-xs font-bold text-slate-900 truncate">دخول كمعلم (الصف الرابع أ)</div>
+                                    <div class="text-[10px] text-sky-700">أ. عبد الله المنصور</div>
+                                </div>
+                            </button>
+
+                            <button type="button" 
+                                onclick="loginAsParent('0501234567', 'عبد الله السعيد (أبو أحمد)')"
+                                class="p-3 text-right bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200/80 rounded-xl transition flex items-center gap-3 group">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs shrink-0 group-hover:scale-105 transition-transform">
+                                    <i class="fa-solid fa-house-user"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="text-xs font-bold text-slate-900 truncate">دخول كولي أمر (أحمد وخالد)</div>
+                                    <div class="text-[10px] text-emerald-700">عبد الله السعيد (ابنان في المدرسة)</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Note -->
+                <div class="text-center text-xs text-slate-400 flex items-center justify-center gap-3">
+                    <span>وزارة التعليم • منصة المدارس النموذجية</span>
+                    <span>•</span>
+                    <button type="button" onclick="SchoolData.resetAll()" class="hover:text-rose-500 transition underline text-[11px]">
+                        استعادة بيانات العرض الافتراضية
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- VIEW 2: TEACHER & ADMIN DASHBOARD (لوحة تحكم المعلم)          -->
+        <!-- ============================================================== -->
+        <section id="teacher-dashboard-view" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+            
+            <!-- Dashboard Welcome & Actions Row -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-l from-navy-900 to-navy-800 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-sky-200 text-xs font-semibold mb-2">
+                        <i class="fa-solid fa-school"></i>
+                        <span>لوحة المعلم ورصد الحضور المدرسي</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black">مرحباً بك مجدداً، أ. عبد الله 👋</h2>
+                    <p class="text-xs sm:text-sm text-sky-100/80 mt-1">تأكد من رصد وتأكيد حضور طلاب فصلك لليوم وإشعار أولياء الأمور تلقائياً.</p>
+                </div>
+
+                <div class="relative z-10 flex flex-wrap items-center gap-2.5">
+                    <button type="button" 
+                        onclick="openAddStudentModal()"
+                        class="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-md shadow-sky-500/20">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>إضافة طالب جديد</span>
+                    </button>
+                    <button type="button" 
+                        onclick="openNoteModalForStudent('')"
+                        class="bg-white/15 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 backdrop-blur-xs">
+                        <i class="fa-regular fa-comment-dots"></i>
+                        <span>تدوين ملاحظة وسلوك</span>
+                    </button>
+                </div>
+
+                <!-- Abstract graphic background -->
+                <div class="absolute -left-10 -bottom-10 w-60 h-60 bg-sky-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            </div>
+
+            <!-- Quick Stats Cards (إحصائيات سريعة) -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+                <!-- Stat 1: Total Students -->
+                <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-slate-400">إجمالي الطلاب</span>
+                        <div id="stat-total-students" class="text-2xl sm:text-3xl font-black text-navy-900 mt-1">--</div>
+                        <span class="text-[10px] text-slate-400">في الفصل المحدد</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                </div>
+
+                <!-- Stat 2: Attendance Rate -->
+                <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-400">نسبة الحضور اليوم</span>
+                        <span class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">ممتاز</span>
+                    </div>
+                    <div class="flex items-baseline gap-2 mt-2">
+                        <span id="stat-attendance-rate" class="text-2xl sm:text-3xl font-black text-emerald-600">--%</span>
+                    </div>
+                    <!-- Mini progress bar -->
+                    <div class="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
+                        <div id="stat-rate-progress-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Stat 3: Present Count -->
+                <div class="bg-white p-4 sm:p-5 rounded-2xl border border-emerald-200/60 shadow-xs flex items-center justify-between bg-emerald-50/20">
+                    <div>
+                        <span class="text-xs font-bold text-emerald-700">الحاضرون اليوم</span>
+                        <div id="stat-present-count" class="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">--</div>
+                        <span class="text-[10px] text-emerald-700/80 font-medium">حاضرون في الصف</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                </div>
+
+                <!-- Stat 4: Absent Count -->
+                <div class="bg-white p-4 sm:p-5 rounded-2xl border border-rose-200/60 shadow-xs flex items-center justify-between bg-rose-50/20">
+                    <div>
+                        <span class="text-xs font-bold text-rose-700">الغائبون اليوم</span>
+                        <div id="stat-absent-count" class="text-2xl sm:text-3xl font-black text-rose-600 mt-1">--</div>
+                        <span class="text-[10px] text-rose-700/80 font-medium">يحتاجون إشعار</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-user-xmark"></i>
+                    </div>
+                </div>
+
+                <!-- Stat 5: Late Count -->
+                <div class="col-span-2 lg:col-span-1 bg-white p-4 sm:p-5 rounded-2xl border border-amber-200/60 shadow-xs flex items-center justify-between bg-amber-50/20">
+                    <div>
+                        <span class="text-xs font-bold text-amber-700">المتأخرون</span>
+                        <div id="stat-late-count" class="text-2xl sm:text-3xl font-black text-amber-600 mt-1">--</div>
+                        <span class="text-[10px] text-amber-700/80 font-medium">حضور بعد الطابور</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-regular fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Tracker Panel (تسجيل الحضور والغياب) -->
+            <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+                <!-- Controls & Filter Toolbar -->
+                <div class="p-5 border-b border-slate-200/80 bg-slate-50/50 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <!-- Class Filter & Date Navigation -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Class Select -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">الفصل الدراسي:</label>
+                            <select id="class-filter-select" class="bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-sky-500 shadow-2xs">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Date Navigation -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">تاريخ الحضور:</label>
+                            <div class="flex items-center gap-1.5 bg-white border border-slate-300 rounded-xl p-1 shadow-2xs">
+                                <button type="button" id="prev-date-btn" class="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-600 transition" title="اليوم السابق">
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </button>
+                                <input type="date" id="attendance-date-picker" class="border-0 text-xs font-bold text-slate-800 focus:outline-hidden px-1">
+                                <button type="button" id="next-date-btn" class="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-600 transition" title="اليوم التالي">
+                                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                                </button>
+                                <button type="button" id="today-date-btn" class="px-2 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-[11px] font-bold transition">
+                                    اليوم
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Search Box -->
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">بحث سريع:</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" id="student-search-input" 
+                                    class="w-full pr-9 pl-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium focus:outline-hidden focus:ring-2 focus:ring-sky-500 shadow-2xs"
+                                    placeholder="ابحث بالاسم أو رقم القيد...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Actions & Save Button -->
+                    <div class="flex items-center gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-200">
+                        <button type="button" 
+                            onclick="markAllFiltered('present')" 
+                            class="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 transition flex items-center gap-1.5"
+                            title="تحديد جميع الطلاب المعروضين كحاضرين">
+                            <i class="fa-solid fa-check-double text-emerald-600"></i>
+                            <span class="hidden sm:inline">الكل حاضر</span>
+                        </button>
+
+                        <button type="button" 
+                            onclick="clearAllFiltered()" 
+                            class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition"
+                            title="تفريغ الاختيارات">
+                            <i class="fa-solid fa-eraser"></i>
+                        </button>
+
+                        <button type="button" 
+                            onclick="printAttendanceSheet()" 
+                            class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-200 transition flex items-center gap-1.5"
+                            title="طباعة كشف الحضور الرسمي">
+                            <i class="fa-solid fa-print"></i>
+                            <span class="hidden sm:inline">طباعة</span>
+                        </button>
+
+                        <!-- Primary Save Button -->
+                        <button type="button" 
+                            id="save-attendance-btn"
+                            onclick="saveAttendance()" 
+                            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-black shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
+                            <i class="fa-solid fa-floppy-disk text-sm"></i>
+                            <span>حفظ الحضور</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Printable Report Header (Only visible when printing) -->
+                <div class="print-only p-6 border-b border-black">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold">المملكة العربية السعودية - وزارة التعليم</h2>
+                            <h3 class="text-lg">مدرسة الأندلس النموذجية الابتدائية</h3>
+                        </div>
+                        <div class="text-left font-mono">
+                            <p>التاريخ: <span id="print-date-display"></span></p>
+                            <p>الفصل: <span id="print-class-display"></span></p>
+                            <p>نسبة الحضور: <span id="print-rate-display"></span></p>
+                        </div>
+                    </div>
+                    <h1 class="text-center text-2xl font-black underline my-4">كشف الحضور والغياب اليومي الرسمي</h1>
+                </div>
+
+                <!-- Students Table (Desktop View) -->
+                <div class="hidden md:block overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100/70 text-slate-500 text-xs font-bold border-b border-slate-200">
+                                <th class="py-3 px-4">الطالب</th>
+                                <th class="py-3 px-4">ولي الأمر والتواصل</th>
+                                <th class="py-3 px-4 text-center">حالة اليوم</th>
+                                <th class="py-3 px-4 text-center action-buttons-cell">تسجيل الحضور السريع</th>
+                                <th class="py-3 px-4 text-left action-buttons-cell">ملاحظات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Students Cards (Mobile View) -->
+                <div id="attendance-mobile-cards" class="md:hidden p-4 space-y-3">
+                    <!-- Populated via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Student Notes & Behavior Stream (سجل ملاحظات الطلاب) -->
+            <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-sky-600 text-lg"></i>
+                            <h3 class="font-bold text-navy-900 text-lg">سجل الملاحظات والسلوك الطلابي</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">سجل الملاحظات الأكاديمية والانضباطية وتنبيهات أولياء الأمور المباشرة</p>
+                    </div>
+
+                    <!-- Category Filter Buttons -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+                        <button type="button" data-filter="all" class="note-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-600 text-white transition">الكل</button>
+                        <button type="button" data-filter="positive" class="note-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">إيجابي</button>
+                        <button type="button" data-filter="academic" class="note-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">دراسي</button>
+                        <button type="button" data-filter="behavior" class="note-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">تنبيه سلوكي</button>
+                    </div>
+                </div>
+
+                <!-- Feed Container -->
+                <div id="teacher-notes-feed-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-5">
+                    <!-- Populated via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Print Signatures (Print Only) -->
+            <div class="print-only mt-12 pt-8 border-t border-slate-300 flex justify-between px-12">
+                <div class="text-center">
+                    <p class="font-bold">معلم الفصل ورائد النشاط:</p>
+                    <p class="mt-8">....................................................</p>
+                </div>
+                <div class="text-center">
+                    <p class="font-bold">وكيل الشؤون التعليمية:</p>
+                    <p class="mt-8">....................................................</p>
+                </div>
+                <div class="text-center">
+                    <p class="font-bold">مدير المدرسة:</p>
+                    <p class="mt-8">....................................................</p>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- VIEW 3: PARENT PORTAL (بوابة ولي الأمر)                       -->
+        <!-- ============================================================== -->
+        <section id="parent-portal-view" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+            
+            <!-- Parent Welcome & Child Selector -->
+            <div class="bg-gradient-to-l from-navy-900 via-navy-800 to-sky-700 text-white p-6 sm:p-7 rounded-3xl shadow-lg relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="relative z-10">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-emerald-300 text-xs font-bold mb-2">
+                        <i class="fa-solid fa-shield-heart"></i>
+                        <span>بوابة ولي الأمر المعتمدة</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black">أهلاً بك يا أبا أحمد 👋</h2>
+                    <p class="text-xs sm:text-sm text-sky-100/80 mt-1">تابع الحضور والغياب والملاحظات المدرسية المباشرة لأبنائك لحظة بلحظة.</p>
+                </div>
+
+                <div class="relative z-10">
+                    <button type="button" 
+                        onclick="openExcuseModalWithDate('')"
+                        class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-md shadow-emerald-500/20">
+                        <i class="fa-solid fa-file-pen"></i>
+                        <span>تقديم عذر غياب جديد</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Multi-Child Selector Tabs (if parent has multiple kids) -->
+            <div id="parent-children-tabs">
+                <!-- Dynamically populated if more than 1 child -->
+            </div>
+
+            <!-- Student Profile Card & Summary Stats -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <!-- Child Info Card -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-4">
+                            <div id="parent-child-avatar" class="w-14 h-14 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xl shadow-xs">
+                                أح
+                            </div>
+                            <div>
+                                <h3 id="parent-child-name" class="font-black text-navy-900 text-lg">أحمد عبد الله السعيد</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    <span id="parent-child-class" class="font-bold text-sky-700">الصف الرابع (أ)</span>
+                                    <span>•</span>
+                                    <span>رقم القيد: <strong id="parent-child-id" class="font-mono text-slate-600">STD-1001</strong></span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 pt-4 border-t border-slate-100 space-y-2 text-xs">
+                            <div class="flex items-center justify-between text-slate-600">
+                                <span>المعلم المشرف:</span>
+                                <strong class="text-slate-900">أ. عبد الله المنصور</strong>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-600">
+                                <span>القاعة الدراسية:</span>
+                                <strong class="text-slate-900">قاعة رقم 101</strong>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-600">
+                                <span>العام الدراسي:</span>
+                                <strong class="text-slate-900">1448هـ / 2026م</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Progress Metric -->
+                    <div class="mt-5 pt-4 border-t border-slate-100">
+                        <div class="flex items-center justify-between text-xs mb-1.5">
+                            <span class="font-bold text-slate-700">نسبة الانضباط والمواظبة:</span>
+                            <span id="child-rate-val" class="font-black text-emerald-600 text-base">95%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div id="child-rate-bar" class="bg-gradient-to-l from-emerald-500 to-sky-500 h-full rounded-full transition-all duration-500" style="width: 95%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Child Counters (Present / Absent / Late) -->
+                <div class="lg:col-span-2 grid grid-cols-3 gap-3.5 sm:gap-4">
+                    <!-- Present Counter -->
+                    <div class="bg-white p-5 rounded-3xl border border-emerald-200/70 shadow-xs flex flex-col justify-between bg-emerald-50/20">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-base mb-2">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-emerald-800">أيام الحضور المكتمل</span>
+                            <div id="child-present-val" class="text-3xl font-black text-emerald-600 mt-1">18</div>
+                            <span class="text-[11px] text-emerald-700/80">يوم مواظبة</span>
+                        </div>
+                    </div>
+
+                    <!-- Absent Counter -->
+                    <div class="bg-white p-5 rounded-3xl border border-rose-200/70 shadow-xs flex flex-col justify-between bg-rose-50/20">
+                        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-base mb-2">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-rose-800">أيام الغياب</span>
+                            <div id="child-absent-val" class="text-3xl font-black text-rose-600 mt-1">1</div>
+                            <span class="text-[11px] text-rose-700/80">موثق بعذر طبي</span>
+                        </div>
+                    </div>
+
+                    <!-- Late Counter -->
+                    <div class="bg-white p-5 rounded-3xl border border-amber-200/70 shadow-xs flex flex-col justify-between bg-amber-50/20">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-base mb-2">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-amber-800">مرات التأخر</span>
+                            <div id="child-late-val" class="text-3xl font-black text-amber-600 mt-1">1</div>
+                            <span class="text-[11px] text-amber-700/80">بعد الطابور</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dual Section: Attendance History & Teacher Notes Feed -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left/Main Column: Attendance Calendar & Recent Days Log (7 Cols) -->
+                <div class="lg:col-span-7 space-y-6">
+                    <!-- Interactive Visual Calendar -->
+                    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h4 class="font-bold text-navy-900 text-base flex items-center gap-2">
+                                    <i class="fa-regular fa-calendar-days text-sky-600"></i>
+                                    <span>تقويم الحضور الشهري</span>
+                                </h4>
+                                <p class="text-xs text-slate-400 mt-0.5" id="calendar-month-name">الشهر الحالي</p>
+                            </div>
+
+                            <!-- Legend -->
+                            <div class="flex items-center gap-3 text-[11px] font-semibold text-slate-600">
+                                <span class="flex items-center gap-1">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                    <span>حاضر</span>
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                                    <span>غائب</span>
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                    <span>متأخر</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Calendar Grid -->
+                        <div class="space-y-2">
+                            <!-- Weekday headers (Sunday through Saturday in Arabic) -->
+                            <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-400 pb-1 border-b border-slate-100">
+                                <div>أحد</div>
+                                <div>اثنين</div>
+                                <div>ثلاثاء</div>
+                                <div>أربعاء</div>
+                                <div>خميس</div>
+                                <div class="text-slate-300">جمعة</div>
+                                <div class="text-slate-300">سبت</div>
+                            </div>
+                            <!-- Days Boxes Container -->
+                            <div id="parent-calendar-grid" class="grid grid-cols-7 gap-1.5 pt-1">
+                                <!-- Populated dynamically via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance History Status Table -->
+                    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h4 class="font-bold text-navy-900 text-base">سجل الأيام السابقة</h4>
+                                <p class="text-xs text-slate-400">آخر 15 يوماً دراسياً مسجلاً للطالب</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs font-bold border-b border-slate-200/60">
+                                        <th class="py-3 px-4">اليوم</th>
+                                        <th class="py-3 px-4">التاريخ</th>
+                                        <th class="py-3 px-4">الحالة</th>
+                                        <th class="py-3 px-4">العذر المرفوع</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="parent-history-table-body" class="divide-y divide-slate-100 text-xs">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Excuses Tracker Box -->
+                    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-bold text-navy-900 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-envelope-open-text text-sky-600"></i>
+                                <span>حالات أعذار الغياب المرفوعة</span>
+                            </h4>
+                            <button type="button" onclick="openExcuseModalWithDate('')" class="text-xs text-sky-600 hover:underline font-bold">
+                                + إضافة عذر جديد
+                            </button>
+                        </div>
+                        <div id="parent-excuses-container" class="space-y-2">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Teacher Notes Feed (5 Cols) -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-bold text-navy-900 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-comments text-sky-600"></i>
+                                <span>صندوق ملاحظات المعلمين</span>
+                            </h4>
+                            <p class="text-xs text-slate-400">رسائل وتوجيهات الكادر التعليمي بشأن الطالب</p>
+                        </div>
+                    </div>
+
+                    <!-- Notes Feed Container -->
+                    <div id="parent-notes-feed" class="space-y-3.5">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 1: ADD NEW STUDENT (إضافة طالب جديد)                    -->
+    <!-- ============================================================== -->
+    <div id="add-student-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 animate-pulse-slow-none">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
+                        <i class="fa-solid fa-user-plus text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-lg">إضافة طالب جديد</h3>
+                        <p class="text-xs text-slate-400">تسجيل بيانات الطالب وربطه بولي الأمر</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAddStudentModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="add-student-form" class="space-y-4 pt-4">
+                <!-- Full Name -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">الاسم الرباعي للطالب <span class="text-rose-500">*</span></label>
+                    <input type="text" id="new-student-name" required
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition" 
+                        placeholder="مثال: عبد العزيز محمد السعيد">
+                </div>
+
+                <!-- Grade / Class & Gender -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">الصف والشعبة <span class="text-rose-500">*</span></label>
+                        <select id="new-student-class" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition">
+                            <option value="c4a">الصف الرابع (أ)</option>
+                            <option value="c4b">الصف الرابع (ب)</option>
+                            <option value="c2a">الصف الثاني (أ)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">النوع / الجنس</label>
+                        <div class="flex items-center gap-3 pt-2">
+                            <label class="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                                <input type="radio" name="new-student-gender" value="male" checked class="text-sky-600">
+                                <span>طالب (بنين)</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                                <input type="radio" name="new-student-gender" value="female" class="text-pink-600">
+                                <span>طالبة (بنات)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- National ID / Student ID -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">رقم الهوية الوطنية / الإقامة</label>
+                    <input type="text" id="new-student-nid" maxlength="10"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition" 
+                        placeholder="10 أرقام (اختياري)">
+                </div>
+
+                <!-- Parent Name -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">اسم ولي الأمر</label>
+                    <input type="text" id="new-student-parent-name"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition" 
+                        placeholder="مثال: محمد السعيد">
+                </div>
+
+                <!-- Parent Phone Number & Parent Email -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">رقم جوال ولي الأمر <span class="text-rose-500">*</span></label>
+                        <input type="tel" id="new-student-phone" required
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition" 
+                            placeholder="05XXXXXXXX">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">بريد ولي الأمر / اسم المستخدم</label>
+                        <input type="email" id="new-student-email"
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition" 
+                            placeholder="parent@example.com">
+                    </div>
+                </div>
+
+                <!-- Submit / Cancel -->
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeAddStudentModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-md shadow-sky-600/20 transition flex items-center gap-2">
+                        <i class="fa-solid fa-check"></i>
+                        <span>إضافة الطالب الآن</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-    
-    <div class="box2">
-        <img src="706.jpg">
-    <h2>My Day</h2>
-    
-    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Minima blanditiis tempore velit in iure accusamus. Tempora eos officiis veniam alias.</p>
-    
+
+    <!-- ============================================================== -->
+    <!-- MODAL 2: ADD NOTE & BEHAVIOR (تدوين ملاحظة وسلوك)               -->
+    <!-- ============================================================== -->
+    <div id="add-note-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                        <i class="fa-regular fa-comment-dots text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-lg">تدوين ملاحظة / سلوك</h3>
+                        <p class="text-xs text-slate-400">إرسال تقرير وملاحظة مباشرة لولي الأمر</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeNoteModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="add-note-form" class="space-y-4 pt-4">
+                <!-- Select Student -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">اختر الطالب المعني <span class="text-rose-500">*</span></label>
+                    <select id="note-student-select" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition">
+                        <!-- Populated dynamically via JS -->
+                    </select>
+                </div>
+
+                <!-- Note Type -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">تصنيف الملاحظة <span class="text-rose-500">*</span></label>
+                    <select id="note-type-select" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition">
+                        <option value="positive">🌟 إيجابي وتفوق أكاديمي (تعزيز ومدح)</option>
+                        <option value="academic">📚 متابعة دراسية وواجبات</option>
+                        <option value="behavior">⚠️ تنبيه سلوكي وانضباطي</option>
+                        <option value="appreciation">🎖️ شكر وتقدير لموقف متميز</option>
+                    </select>
+                </div>
+
+                <!-- Note Title -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">عنوان الملاحظة <span class="text-rose-500">*</span></label>
+                    <input type="text" id="note-title-input" required
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition" 
+                        placeholder="مثال: تفاعل متميز في حصة العلوم اليوم">
+                </div>
+
+                <!-- Note Content -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">تفاصيل الملاحظة والتوجيه <span class="text-rose-500">*</span></label>
+                    <textarea id="note-content-input" rows="4" required
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition leading-relaxed" 
+                        placeholder="اكتب التوجيه أو الإشادة هنا... سيصل إشعار فوري لولي الأمر عبر البوابة"></textarea>
+                </div>
+
+                <!-- Submit / Cancel -->
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeNoteModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-navy-800 hover:bg-navy-900 text-white text-xs font-bold shadow-md shadow-navy-900/20 transition flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>إرسال الملاحظة لولي الأمر</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="box3" >
-    <img src="WhatsApp Image 2026-08-31 at 5.28.45 PM.jpeg">
-    <h2>My Day</h2>
-    
-    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Minima blanditiis tempore velit in iure accusamus. Tempora eos officiis veniam alias.</p>
-    
-    
+
+    <!-- ============================================================== -->
+    <!-- MODAL 3: SUBMIT ABSENCE EXCUSE (تقديم عذر غياب)                -->
+    <!-- ============================================================== -->
+    <div id="submit-excuse-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                        <i class="fa-solid fa-file-medical text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-lg">تقديم عذر غياب طالب</h3>
+                        <p class="text-xs text-slate-400">رفع العذر لإدارة المدرسة للمراجعة والاعتماد</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeExcuseModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="submit-excuse-form" class="space-y-4 pt-4">
+                <!-- Date of Absence -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ يوم الغياب <span class="text-rose-500">*</span></label>
+                    <input type="date" id="excuse-date-input" required
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition">
+                </div>
+
+                <!-- Reason Type -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">نوع العذر <span class="text-rose-500">*</span></label>
+                    <select id="excuse-type-select" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition">
+                        <option value="عذر مرضي ومراجعة مستشفى">عذر مرضي ومراجعة مستشفى أو عيادة</option>
+                        <option value="ظرف عائلي قاهر">ظرف عائلي قاهر</option>
+                        <option value="موعد رسمي / معاملة حكومية">موعد رسمي / معاملة حكومية</option>
+                        <option value="أخرى">أسباب أخرى</option>
+                    </select>
+                </div>
+
+                <!-- Excuse Details -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">تفاصيل العذر <span class="text-rose-500">*</span></label>
+                    <textarea id="excuse-detail-input" rows="3" required
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition" 
+                        placeholder="يرجى كتابة سبب الغياب وتوضيح إذا كان هناك تقرير طبي أو إشعار رسمي..."></textarea>
+                </div>
+
+                <!-- Submit / Cancel -->
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeExcuseModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>إرسال العذر للمدرسة</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-    
-    
-    </div>
-    
-    
-    <i class="fa-solid fa-image"></i>
-    
-    
-    
-    
-    
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="no-print"></div>
+
+    <!-- Application Scripts -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
