@@ -1,1271 +1,1187 @@
 /**
- * app.js - School Attendance & Student Management Application Logic
- * Full RTL Arabic Application
+ * App.js - المحرك الرئيسي لنظام إدارة مركز التدريب المهني
+ * يدعم الحفظ الدائم (Permanent Storage)، تسجيل الدخول بكلمات المرور للمستخدمين والمهندسين والإدارة،
+ * والربط مع ملف كلمات المرور المنفصل 'password'.
  */
 
-// Application State
-const AppState = {
-    currentUser: null,       // { role: 'teacher'|'parent', name, ... }
-    selectedClass: 'c4a',    // 'all' or class id like 'c4a'
-    selectedDate: getFormattedDateString(new Date()),
-    searchQuery: '',
-    currentAttendance: {},   // Map of studentId -> 'present'|'absent'|'late'
-    selectedParentChildId: null, // For parent portal
-    notesFilter: 'all',
-    activeParentTab: 'overview' // 'overview' | 'calendar' | 'notes'
-};
-
-// Initialize App on DOM Loaded
-document.addEventListener('DOMContentLoaded', () => {
-    initAuth();
-    initEventListeners();
-    setupCurrentDateDisplay();
-});
-
-// Setup Hijri & Arabic Date in Header
-function setupCurrentDateDisplay() {
-    const dateElements = document.querySelectorAll('.arabic-current-date');
-    const now = new Date();
-    
-    // Arabic formatted date
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const formatted = now.toLocaleDateString('ar-SA-u-ca-gregory', options);
-    
-    dateElements.forEach(el => {
-        el.textContent = formatted;
-    });
-}
-
-// -------------------------------------------------------------
-// Authentication & Session
-// -------------------------------------------------------------
-function initAuth() {
-    const savedUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-    if (savedUser) {
-        try {
-            AppState.currentUser = JSON.parse(savedUser);
-            renderAppView();
-            return;
-        } catch (e) {
-            console.error('Failed to parse saved user', e);
-        }
-    }
-    // Default show login screen
-    showView('login-view');
-}
-
-function loginAsTeacher(teacherName = 'أ. عبد الله المنصور', classId = 'c4a') {
-    AppState.currentUser = {
-        role: 'teacher',
-        name: teacherName,
-        email: 'abdullah.almansoor@school.edu.sa',
-        assignedClass: classId,
-        title: 'معلم الصف الرابع (أ) ورائد النشاط'
-    };
-    AppState.selectedClass = classId;
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(AppState.currentUser));
-    renderAppView();
-    showToast(`مرحباً بك يا ${AppState.currentUser.name} في لوحة التحكم`, 'success');
-}
-
-function loginAsParent(parentPhone = '0501234567', parentName = 'عبد الله السعيد') {
-    const allStudents = SchoolData.getStudents();
-    const children = allStudents.filter(s => s.parentPhone === parentPhone || s.parentName.includes('السعيد'));
-    
-    AppState.currentUser = {
-        role: 'parent',
-        name: parentName,
-        phone: parentPhone,
-        email: 'parent.ahmed@example.com',
-        childrenIds: children.map(c => c.id)
-    };
-    
-    if (children.length > 0) {
-        AppState.selectedParentChildId = children[0].id;
-    }
-
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(AppState.currentUser));
-    renderAppView();
-    showToast(`أهلاً بك يا ${AppState.currentUser.name} في بوابة أولياء الأمور`, 'success');
-}
-
-function logout() {
-    AppState.currentUser = null;
-    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
-    showView('login-view');
-    showToast('تم تسجيل الخروج بنجاح', 'info');
-}
-
-function switchRole() {
-    if (AppState.currentUser && AppState.currentUser.role === 'teacher') {
-        loginAsParent();
-    } else {
-        loginAsTeacher();
-    }
-}
-
-// Show specific view container
-function showView(viewId) {
-    const views = ['login-view', 'teacher-dashboard-view', 'parent-portal-view'];
-    views.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            if (id === viewId) {
-                el.classList.remove('hidden');
-            } else {
-                el.classList.add('hidden');
-            }
-        }
-    });
-
-    const topHeader = document.getElementById('main-app-header');
-    if (topHeader) {
-        if (viewId === 'login-view') {
-            topHeader.classList.add('hidden');
-        } else {
-            topHeader.classList.remove('hidden');
-        }
-    }
-}
-
-function renderAppView() {
-    if (!AppState.currentUser) {
-        showView('login-view');
-        return;
-    }
-
-    updateHeaderUserInfo();
-
-    if (AppState.currentUser.role === 'teacher') {
-        showView('teacher-dashboard-view');
-        renderTeacherDashboard();
-    } else if (AppState.currentUser.role === 'parent') {
-        showView('parent-portal-view');
-        renderParentPortal();
-    }
-}
-
-function updateHeaderUserInfo() {
-    const userNameEl = document.getElementById('header-user-name');
-    const userRoleBadge = document.getElementById('header-user-role');
-    const switchRoleBtnText = document.getElementById('switch-role-btn-text');
-
-    if (userNameEl && AppState.currentUser) {
-        userNameEl.textContent = AppState.currentUser.name;
-    }
-
-    if (userRoleBadge && AppState.currentUser) {
-        if (AppState.currentUser.role === 'teacher') {
-            userRoleBadge.textContent = 'معلم / إدارة';
-            userRoleBadge.className = 'text-xs px-2.5 py-1 rounded-full font-semibold bg-blue-100 text-blue-800 border border-blue-200';
-            if (switchRoleBtnText) switchRoleBtnText.textContent = 'معاينة بوابة ولي الأمر';
-        } else {
-            userRoleBadge.textContent = 'ولي أمر';
-            userRoleBadge.className = 'text-xs px-2.5 py-1 rounded-full font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200';
-            if (switchRoleBtnText) switchRoleBtnText.textContent = 'العودة للوحة المعلم';
-        }
-    }
-}
-
-// -------------------------------------------------------------
-// Teacher Dashboard Logic
-// -------------------------------------------------------------
-function renderTeacherDashboard() {
-    // Sync date selector input
-    const dateInput = document.getElementById('attendance-date-picker');
-    if (dateInput) {
-        dateInput.value = AppState.selectedDate;
-    }
-
-    // Load attendance records for current selected date
-    const allAttendance = SchoolData.getAttendance();
-    AppState.currentAttendance = { ...(allAttendance[AppState.selectedDate] || {}) };
-
-    // Render classes dropdown selector
-    renderClassFilterDropdown();
-
-    // Render student table & quick stats
-    renderAttendanceList();
-    renderQuickStats();
-
-    // Render Student dropdown in Note Modal
-    populateNoteStudentDropdown();
-
-    // Render Notes Feed in Teacher view
-    renderTeacherNotesFeed();
-}
-
-function renderClassFilterDropdown() {
-    const classSelect = document.getElementById('class-filter-select');
-    if (!classSelect) return;
-
-    classSelect.innerHTML = `
-        <option value="all" ${AppState.selectedClass === 'all' ? 'selected' : ''}>جميع الفصول المتاحة</option>
-        ${SCHOOL_CLASSES.map(c => `
-            <option value="${c.id}" ${AppState.selectedClass === c.id ? 'selected' : ''}>${c.name} - ${c.teacher}</option>
-        `).join('')}
-    `;
-}
-
-function getFilteredStudents() {
-    const students = SchoolData.getStudents();
-    return students.filter(student => {
-        // Class filter
-        const matchClass = AppState.selectedClass === 'all' || student.classId === AppState.selectedClass;
-        
-        // Search filter
-        const query = AppState.searchQuery.trim().toLowerCase();
-        const matchSearch = !query || 
-            student.fullName.toLowerCase().includes(query) || 
-            student.id.toLowerCase().includes(query) ||
-            student.parentPhone.includes(query);
-
-        return matchClass && matchSearch;
-    });
-}
-
-function renderQuickStats() {
-    const filteredStudents = getFilteredStudents();
-    const total = filteredStudents.length;
-
-    let presentCount = 0;
-    let absentCount = 0;
-    let lateCount = 0;
-    let unrecordedCount = 0;
-
-    filteredStudents.forEach(st => {
-        const status = AppState.currentAttendance[st.id];
-        if (status === 'present') presentCount++;
-        else if (status === 'absent') absentCount++;
-        else if (status === 'late') lateCount++;
-        else unrecordedCount++;
-    });
-
-    const recordedTotal = presentCount + absentCount + lateCount;
-    const attendanceRate = total > 0 ? Math.round(((presentCount + (lateCount * 0.5)) / total) * 100) : 0;
-
-    // Update DOM counters
-    const totalEl = document.getElementById('stat-total-students');
-    const presentEl = document.getElementById('stat-present-count');
-    const absentEl = document.getElementById('stat-absent-count');
-    const lateEl = document.getElementById('stat-late-count');
-    const rateEl = document.getElementById('stat-attendance-rate');
-    const progressBar = document.getElementById('stat-rate-progress-bar');
-
-    if (totalEl) totalEl.textContent = total;
-    if (presentEl) presentEl.textContent = presentCount;
-    if (absentEl) absentEl.textContent = absentCount;
-    if (lateEl) lateEl.textContent = lateCount;
-    if (rateEl) rateEl.textContent = `${attendanceRate}%`;
-    if (progressBar) progressBar.style.width = `${attendanceRate}%`;
-
-    // Print summary elements
-    const printDate = document.getElementById('print-date-display');
-    const printClass = document.getElementById('print-class-display');
-    const printRate = document.getElementById('print-rate-display');
-    if (printDate) printDate.textContent = AppState.selectedDate;
-    if (printClass) {
-        const cls = SCHOOL_CLASSES.find(c => c.id === AppState.selectedClass);
-        printClass.textContent = cls ? cls.name : 'جميع الفصول';
-    }
-    if (printRate) printRate.textContent = `${attendanceRate}%`;
-}
-
-function renderAttendanceList() {
-    const container = document.getElementById('attendance-table-body');
-    const mobileContainer = document.getElementById('attendance-mobile-cards');
-    if (!container) return;
-
-    const students = getFilteredStudents();
-
-    if (students.length === 0) {
-        const emptyState = `
-            <tr>
-                <td colspan="5" class="py-12 text-center text-slate-500">
-                    <div class="flex flex-col items-center justify-center">
-                        <i class="fa-solid fa-user-slash text-4xl text-slate-300 mb-3"></i>
-                        <p class="font-medium text-slate-600">لم يتم العثور على طلاب مطابقين للبحث أو الفصل المحدد</p>
-                        <p class="text-sm text-slate-400 mt-1">تأكد من اختيار الفصل أو قم بإضافة طالب جديد</p>
-                    </div>
-                </td>
-            </tr>
-        `;
-        container.innerHTML = emptyState;
-        if (mobileContainer) mobileContainer.innerHTML = emptyState;
-        return;
-    }
-
-    // Desktop Table Rows
-    const rowsHtml = students.map((student, idx) => {
-        const currentStatus = AppState.currentAttendance[student.id] || null;
-        const initials = student.fullName.split(' ').slice(0, 2).map(n => n[0]).join(' ');
-
-        return `
-            <tr class="hover:bg-slate-50/70 border-b border-slate-100 transition-colors ${currentStatus === 'absent' ? 'bg-rose-50/20' : ''}">
-                <!-- # & Student Info -->
-                <td class="py-3.5 px-4">
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-semibold text-slate-400 w-5">${idx + 1}</span>
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${student.avatarBg} shadow-sm shrink-0">
-                            ${initials}
-                        </div>
-                        <div>
-                            <div class="font-bold text-slate-900 flex items-center gap-2">
-                                <span>${student.fullName}</span>
-                                ${student.gender === 'female' ? '<span class="text-xs text-pink-500" title="طالبة">●</span>' : ''}
-                            </div>
-                            <div class="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
-                                <span class="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">${student.id}</span>
-                                <span>•</span>
-                                <span>${student.className}</span>
-                            </div>
-                        </div>
-                    </div>
-                </td>
-
-                <!-- Parent Contact -->
-                <td class="py-3.5 px-4 hidden md:table-cell">
-                    <div class="text-sm text-slate-700 font-medium">${student.parentName}</div>
-                    <div class="flex items-center gap-2 mt-1">
-                        <a href="tel:${student.parentPhone}" class="text-xs text-slate-500 hover:text-sky-600 flex items-center gap-1 bg-slate-100 hover:bg-sky-50 px-2 py-0.5 rounded transition">
-                            <i class="fa-solid fa-phone text-[10px]"></i>
-                            <span dir="ltr">${student.parentPhone}</span>
-                        </a>
-                        <a href="https://wa.me/966${student.parentPhone.replace(/^0/, '')}" target="_blank" class="text-emerald-600 hover:text-emerald-700 text-xs px-1.5 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 transition" title="مراسلة واتساب">
-                            <i class="fa-brands fa-whatsapp"></i>
-                        </a>
-                    </div>
-                </td>
-
-                <!-- Current Status Badge -->
-                <td class="py-3.5 px-4 text-center">
-                    ${getStatusBadge(currentStatus)}
-                </td>
-
-                <!-- Fast Action Toggle Buttons -->
-                <td class="py-3.5 px-4 action-buttons-cell">
-                    <div class="inline-flex rounded-xl p-1 bg-slate-100 border border-slate-200/80 gap-1">
-                        <button type="button" 
-                            onclick="setStudentStatus('${student.id}', 'present')" 
-                            class="btn-status btn-status-present px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${currentStatus === 'present' ? 'active' : 'text-slate-600 hover:bg-white'}">
-                            <i class="fa-solid fa-check text-xs"></i>
-                            <span>حاضر</span>
-                        </button>
-                        <button type="button" 
-                            onclick="setStudentStatus('${student.id}', 'late')" 
-                            class="btn-status btn-status-late px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${currentStatus === 'late' ? 'active' : 'text-slate-600 hover:bg-white'}">
-                            <i class="fa-regular fa-clock text-xs"></i>
-                            <span>متأخر</span>
-                        </button>
-                        <button type="button" 
-                            onclick="setStudentStatus('${student.id}', 'absent')" 
-                            class="btn-status btn-status-absent px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${currentStatus === 'absent' ? 'active' : 'text-slate-600 hover:bg-white'}">
-                            <i class="fa-solid fa-xmark text-xs"></i>
-                            <span>غائب</span>
-                        </button>
-                    </div>
-                </td>
-
-                <!-- Quick Actions (Note / Details) -->
-                <td class="py-3.5 px-4 text-left action-buttons-cell">
-                    <button type="button" 
-                        onclick="openNoteModalForStudent('${student.id}')"
-                        class="p-2 rounded-lg text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition" 
-                        title="إضافة ملاحظة سلوكية أو دراسية">
-                        <i class="fa-regular fa-comment-dots text-base"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-
-    container.innerHTML = rowsHtml;
-
-    // Mobile Cards View
-    if (mobileContainer) {
-        mobileContainer.innerHTML = students.map((student, idx) => {
-            const currentStatus = AppState.currentAttendance[student.id] || null;
-            const initials = student.fullName.split(' ').slice(0, 2).map(n => n[0]).join(' ');
-
-            return `
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-3">
-                    <div class="flex items-start justify-between gap-2">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${student.avatarBg} shrink-0">
-                                ${initials}
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-slate-900 text-sm">${student.fullName}</h4>
-                                <span class="text-xs text-slate-400 font-mono">${student.id} • ${student.className}</span>
-                            </div>
-                        </div>
-                        <div>${getStatusBadge(currentStatus)}</div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-100">
-                        <button type="button" 
-                            onclick="setStudentStatus('${student.id}', 'present')" 
-                            class="btn-status btn-status-present py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition ${currentStatus === 'present' ? 'active' : 'bg-slate-100 text-slate-700'}">
-                            <i class="fa-solid fa-check"></i>
-                            <span>حاضر</span>
-                        </button>
-                        <button type="button" 
-                            onclick="setStudentStatus('${student.id}', 'late')" 
-                            class="btn-status btn-status-late py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition ${currentStatus === 'late' ? 'active' : 'bg-slate-100 text-slate-700'}">
-                            <i class="fa-regular fa-clock"></i>
-                            <span>متأخر</span>
-                        </button>
-                        <button type="button" 
-                            onclick="setStudentStatus('${student.id}', 'absent')" 
-                            class="btn-status btn-status-absent py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition ${currentStatus === 'absent' ? 'active' : 'bg-slate-100 text-slate-700'}">
-                            <i class="fa-solid fa-xmark"></i>
-                            <span>غائب</span>
-                        </button>
-                    </div>
-
-                    <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
-                        <span class="flex items-center gap-1">
-                            <i class="fa-solid fa-phone text-slate-400"></i>
-                            <span dir="ltr">${student.parentPhone}</span>
-                        </span>
-                        <button type="button" onclick="openNoteModalForStudent('${student.id}')" class="text-sky-600 font-medium hover:underline flex items-center gap-1">
-                            <i class="fa-regular fa-comment-dots"></i>
-                            <span>ملاحظة</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-}
-
-function getStatusBadge(status) {
-    if (status === 'present') {
-        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold badge-present">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>حاضر</span>
-        </span>`;
-    } else if (status === 'absent') {
-        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold badge-absent">
-            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-            <span>غائب</span>
-        </span>`;
-    } else if (status === 'late') {
-        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold badge-late">
-            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span>متأخر</span>
-        </span>`;
-    }
-    return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium badge-unrecorded">
-        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-        <span>لم يُرصد بعد</span>
-    </span>`;
-}
-
-function setStudentStatus(studentId, status) {
-    AppState.currentAttendance[studentId] = status;
-    renderAttendanceList();
-    renderQuickStats();
-}
-
-function markAllFiltered(status) {
-    const students = getFilteredStudents();
-    students.forEach(st => {
-        AppState.currentAttendance[st.id] = status;
-    });
-    renderAttendanceList();
-    renderQuickStats();
-
-    const arabicStatus = status === 'present' ? 'حاضر' : (status === 'absent' ? 'غائب' : 'متأخر');
-    showToast(`تم تحديد جميع الطلاب المعروضين (${students.length}) كـ "${arabicStatus}"`, 'info');
-}
-
-function clearAllFiltered() {
-    const students = getFilteredStudents();
-    students.forEach(st => {
-        delete AppState.currentAttendance[st.id];
-    });
-    renderAttendanceList();
-    renderQuickStats();
-    showToast('تم تفريغ تحديد حضور الطلاب المعروضين', 'info');
-}
-
-function saveAttendance() {
-    SchoolData.saveAttendanceForDate(AppState.selectedDate, AppState.currentAttendance);
-    
-    // Animate save button feedback
-    const saveBtn = document.getElementById('save-attendance-btn');
-    if (saveBtn) {
-        const originalHtml = saveBtn.innerHTML;
-        saveBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>تم الحفظ بنجاح!</span>`;
-        saveBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
-        saveBtn.classList.add('bg-slate-800');
-        setTimeout(() => {
-            saveBtn.innerHTML = originalHtml;
-            saveBtn.classList.remove('bg-slate-800');
-            saveBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
-        }, 1800);
-    }
-
-    const recordedCount = Object.keys(AppState.currentAttendance).length;
-    showToast(`تم اعتماد وحفظ سجل الحضور ليوم (${AppState.selectedDate}) بإجمالي ${recordedCount} طالب`, 'success');
-}
-
-// -------------------------------------------------------------
-// Add New Student Modal
-// -------------------------------------------------------------
-function openAddStudentModal() {
-    const modal = document.getElementById('add-student-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        document.getElementById('new-student-name')?.focus();
-    }
-}
-
-function closeAddStudentModal() {
-    const modal = document.getElementById('add-student-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        document.getElementById('add-student-form')?.reset();
-    }
-}
-
-function handleAddStudentForm(e) {
-    e.preventDefault();
-    const fullName = document.getElementById('new-student-name').value.trim();
-    const classId = document.getElementById('new-student-class').value;
-    const nationalId = document.getElementById('new-student-nid').value.trim();
-    const parentPhone = document.getElementById('new-student-phone').value.trim();
-    const parentEmail = document.getElementById('new-student-email').value.trim();
-    const parentName = document.getElementById('new-student-parent-name').value.trim();
-    const gender = document.querySelector('input[name="new-student-gender"]:checked')?.value || 'male';
-
-    if (!fullName || !parentPhone) {
-        showToast('يرجى كتابة اسم الطالب ورقم هاتف ولي الأمر بشكل صحيح', 'warning');
-        return;
-    }
-
-    const newStudent = SchoolData.addStudent({
-        fullName,
-        classId,
-        nationalId,
-        parentPhone,
-        parentEmail,
-        parentName,
-        gender
-    });
-
-    closeAddStudentModal();
-    renderTeacherDashboard();
-    showToast(`تمت إضافة الطالب (${newStudent.fullName}) بنجاح إلى النظام`, 'success');
-}
-
-// -------------------------------------------------------------
-// Student Notes & Behavior
-// -------------------------------------------------------------
-function populateNoteStudentDropdown() {
-    const select = document.getElementById('note-student-select');
-    if (!select) return;
-
-    const students = SchoolData.getStudents();
-    select.innerHTML = `
-        <option value="">-- اختر طالباً لكتابة ملاحظة له --</option>
-        ${students.map(s => `
-            <option value="${s.id}">${s.fullName} (${s.className}) - رقم القيد: ${s.id}</option>
-        `).join('')}
-    `;
-}
-
-function openNoteModalForStudent(studentId) {
-    const modal = document.getElementById('add-note-modal');
-    if (!modal) return;
-    
-    populateNoteStudentDropdown();
-    const select = document.getElementById('note-student-select');
-    if (select && studentId) {
-        select.value = studentId;
-    }
-    
-    modal.classList.remove('hidden');
-    document.getElementById('note-title-input')?.focus();
-}
-
-function closeNoteModal() {
-    const modal = document.getElementById('add-note-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        document.getElementById('add-note-form')?.reset();
-    }
-}
-
-function handleAddNoteForm(e) {
-    e.preventDefault();
-    const studentId = document.getElementById('note-student-select').value;
-    const type = document.getElementById('note-type-select').value;
-    const title = document.getElementById('note-title-input').value.trim();
-    const content = document.getElementById('note-content-input').value.trim();
-
-    if (!studentId || !title || !content) {
-        showToast('يرجى تحديد الطالب وعنوان الملاحظة ومحتواها', 'warning');
-        return;
-    }
-
-    const student = SchoolData.getStudents().find(s => s.id === studentId);
-    if (!student) return;
-
-    SchoolData.addNote({
-        studentId: student.id,
-        studentName: student.fullName,
-        className: student.className,
-        teacherName: AppState.currentUser?.name || 'معلم الفصل',
-        type,
-        title,
-        content
-    });
-
-    closeNoteModal();
-    renderTeacherNotesFeed();
-    showToast(`تم إرسال الملاحظة لولي أمر الطالب (${student.fullName}) بنجاح`, 'success');
-}
-
-function renderTeacherNotesFeed() {
-    const container = document.getElementById('teacher-notes-feed-container');
-    if (!container) return;
-
-    const allNotes = SchoolData.getNotes();
-    const filter = AppState.notesFilter;
-
-    const filtered = allNotes.filter(n => {
-        if (filter === 'all') return true;
-        return n.type === filter;
-    });
-
-    if (filtered.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-8 text-slate-400">
-                <i class="fa-regular fa-clipboard text-3xl mb-2"></i>
-                <p>لا توجد ملاحظات مسجلة ضمن هذا التصنيف</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = filtered.map(note => {
-        const typeConfig = getNoteTypeConfig(note.type);
-        return `
-            <div class="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-slate-300 transition shadow-xs flex flex-col gap-2">
-                <div class="flex items-center justify-between gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${typeConfig.badgeClass}">
-                        <i class="${typeConfig.icon}"></i>
-                        <span>${typeConfig.label}</span>
-                    </span>
-                    <span class="text-xs text-slate-400">${note.formattedDate}</span>
-                </div>
-                <div>
-                    <h5 class="font-bold text-slate-900 text-sm">${note.title}</h5>
-                    <p class="text-xs text-slate-600 mt-1 leading-relaxed">${note.content}</p>
-                </div>
-                <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
-                    <span class="font-medium text-slate-800">
-                        <i class="fa-solid fa-graduation-cap text-sky-600 ml-1"></i>
-                        <span>الطالب: ${note.studentName}</span>
-                    </span>
-                    <span>${note.teacherName}</span>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function getNoteTypeConfig(type) {
-    switch (type) {
-        case 'positive':
-            return {
-                label: 'إيجابي وتفوق',
-                icon: 'fa-solid fa-star',
-                badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-            };
-        case 'academic':
-            return {
-                label: 'متابعة دراسية',
-                icon: 'fa-solid fa-book-open',
-                badgeClass: 'bg-blue-50 text-blue-700 border border-blue-200'
-            };
-        case 'behavior':
-            return {
-                label: 'تنبيه سلوكي',
-                icon: 'fa-solid fa-triangle-exclamation',
-                badgeClass: 'bg-amber-50 text-amber-700 border border-amber-200'
-            };
-        case 'appreciation':
-            return {
-                label: 'شكر وتقدير',
-                icon: 'fa-solid fa-award',
-                badgeClass: 'bg-purple-50 text-purple-700 border border-purple-200'
-            };
-        default:
-            return {
-                label: 'ملاحظة عامة',
-                icon: 'fa-regular fa-comment',
-                badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200'
-            };
-    }
-}
-
-// -------------------------------------------------------------
-// Parent Portal Logic
-// -------------------------------------------------------------
-function renderParentPortal() {
-    const parent = AppState.currentUser;
-    if (!parent) return;
-
-    const allStudents = SchoolData.getStudents();
-    const children = allStudents.filter(s => {
-        if (parent.childrenIds && parent.childrenIds.includes(s.id)) return true;
-        if (parent.phone && s.parentPhone === parent.phone) return true;
-        return false;
-    });
-
-    // If no specific child selected, select the first
-    if (!AppState.selectedParentChildId && children.length > 0) {
-        AppState.selectedParentChildId = children[0].id;
-    }
-
-    // Render Children Tabs
-    renderParentChildrenSelector(children);
-
-    const activeChild = allStudents.find(s => s.id === AppState.selectedParentChildId) || children[0];
-    if (!activeChild) return;
-
-    renderParentChildOverview(activeChild);
-    renderParentAttendanceCalendar(activeChild);
-    renderParentAttendanceHistoryTable(activeChild);
-    renderParentNotesFeed(activeChild);
-    renderParentExcusesList(activeChild);
-}
-
-function renderParentChildrenSelector(children) {
-    const container = document.getElementById('parent-children-tabs');
-    if (!container) return;
-
-    if (children.length <= 1) {
-        container.innerHTML = '';
-        return;
-    }
-
-    container.innerHTML = `
-        <div class="flex items-center gap-2 overflow-x-auto pb-1">
-            <span class="text-xs font-bold text-slate-400 shrink-0">اختر الابن:</span>
-            ${children.map(child => {
-                const isActive = child.id === AppState.selectedParentChildId;
-                return `
-                    <button type="button" 
-                        onclick="selectParentChild('${child.id}')"
-                        class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 ${
-                            isActive 
-                            ? 'bg-sky-600 text-white shadow-md shadow-sky-500/20' 
-                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                        }">
-                        <i class="fa-solid fa-child-reaching text-sm"></i>
-                        <span>${child.fullName}</span>
-                        <span class="opacity-70 text-[10px]">(${child.className})</span>
-                    </button>
-                `;
-            }).join('')}
-        </div>
-    `;
-}
-
-function selectParentChild(childId) {
-    AppState.selectedParentChildId = childId;
-    renderParentPortal();
-}
-
-function renderParentChildOverview(child) {
-    // Child info card
-    const nameEl = document.getElementById('parent-child-name');
-    const classEl = document.getElementById('parent-child-class');
-    const idEl = document.getElementById('parent-child-id');
-    const avatarEl = document.getElementById('parent-child-avatar');
-
-    if (nameEl) nameEl.textContent = child.fullName;
-    if (classEl) classEl.textContent = child.className;
-    if (idEl) idEl.textContent = child.id;
-    if (avatarEl) {
-        avatarEl.className = `w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl ${child.avatarBg} shadow-sm`;
-        avatarEl.textContent = child.fullName.split(' ').slice(0, 2).map(n => n[0]).join(' ');
-    }
-
-    // Calculate attendance stats for this child across all recorded days
-    const allAttendance = SchoolData.getAttendance();
-    let totalRecordedDays = 0;
-    let presentDays = 0;
-    let absentDays = 0;
-    let lateDays = 0;
-
-    Object.keys(allAttendance).forEach(dateKey => {
-        const status = allAttendance[dateKey][child.id];
-        if (status) {
-            totalRecordedDays++;
-            if (status === 'present') presentDays++;
-            else if (status === 'absent') absentDays++;
-            else if (status === 'late') lateDays++;
-        }
-    });
-
-    const attendanceRate = totalRecordedDays > 0 ? Math.round(((presentDays + (lateDays * 0.5)) / totalRecordedDays) * 100) : 100;
-
-    document.getElementById('child-rate-val').textContent = `${attendanceRate}%`;
-    document.getElementById('child-present-val').textContent = presentDays;
-    document.getElementById('child-absent-val').textContent = absentDays;
-    document.getElementById('child-late-val').textContent = lateDays;
-    
-    const rateBar = document.getElementById('child-rate-bar');
-    if (rateBar) rateBar.style.width = `${attendanceRate}%`;
-}
-
-// Generate interactive monthly attendance calendar
-function renderParentAttendanceCalendar(child) {
-    const calendarContainer = document.getElementById('parent-calendar-grid');
-    if (!calendarContainer) return;
-
-    const allAttendance = SchoolData.getAttendance();
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth(); // Current month (0-indexed)
-
-    // Number of days in current month
-    const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
-
-    const calendarBoxes = [];
-
-    for (let day = 1; day <= totalDaysInMonth; day++) {
-        const dateObj = new Date(year, month, day);
-        const dayOfWeek = dateObj.getDay(); // 0 = Sun, 1 = Mon, ..., 5 = Fri, 6 = Sat
-        const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday & Saturday in Arabic schools
-        const isFuture = dateObj > today;
-        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        
-        let status = null;
-        if (!isWeekend && !isFuture && allAttendance[dateKey]) {
-            status = allAttendance[dateKey][child.id] || 'present'; // Default seed fallback
-        }
-
-        let bgClass = 'bg-white border-slate-200 text-slate-800';
-        let badgeHtml = '';
-        let statusText = 'يوم دراسي';
-
-        if (isWeekend) {
-            bgClass = 'bg-slate-50 border-slate-100 text-slate-300';
-            statusText = 'عطلة أسبوعية';
-        } else if (isFuture) {
-            bgClass = 'bg-slate-50/50 border-dashed border-slate-200 text-slate-400';
-            statusText = 'قادم';
-        } else if (status === 'present') {
-            bgClass = 'bg-emerald-50/70 border-emerald-200 text-emerald-900 font-bold';
-            badgeHtml = '<span class="calendar-dot bg-emerald-500" title="حاضر"></span>';
-            statusText = 'حاضر';
-        } else if (status === 'absent') {
-            bgClass = 'bg-rose-50 border-rose-200 text-rose-900 font-bold';
-            badgeHtml = '<span class="calendar-dot bg-rose-500 animate-pulse" title="غائب"></span>';
-            statusText = 'غائب';
-        } else if (status === 'late') {
-            bgClass = 'bg-amber-50 border-amber-200 text-amber-900 font-bold';
-            badgeHtml = '<span class="calendar-dot bg-amber-500" title="متأخر"></span>';
-            statusText = 'متأخر';
-        }
-
-        calendarBoxes.push(`
-            <div class="calendar-day-box border ${bgClass} p-1 text-center group relative cursor-pointer"
-                 title="${dateKey}: ${statusText}">
-                <span class="text-xs leading-none">${day}</span>
-                ${badgeHtml}
-            </div>
-        `);
-    }
-
-    calendarContainer.innerHTML = calendarBoxes.join('');
-
-    // Calendar month header display
-    const monthHeader = document.getElementById('calendar-month-name');
-    if (monthHeader) {
-        monthHeader.textContent = today.toLocaleDateString('ar-SA-u-ca-gregory', { month: 'long', year: 'numeric' });
-    }
-}
-
-function renderParentAttendanceHistoryTable(child) {
-    const tableBody = document.getElementById('parent-history-table-body');
-    if (!tableBody) return;
-
-    const allAttendance = SchoolData.getAttendance();
-    const excuses = SchoolData.getExcuses().filter(e => e.studentId === child.id);
-
-    // Sort dates descending
-    const sortedDates = Object.keys(allAttendance).sort().reverse().slice(0, 15);
-
-    if (sortedDates.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">لا توجد سجلات حضور مسجلة بعد</td></tr>`;
-        return;
-    }
-
-    tableBody.innerHTML = sortedDates.map(dateKey => {
-        const status = allAttendance[dateKey][child.id] || 'present';
-        const dateObj = new Date(dateKey + 'T00:00:00');
-        const dayName = dateObj.toLocaleDateString('ar-SA', { weekday: 'long' });
-        
-        // Find if there is an excuse for this date
-        const matchExcuse = excuses.find(e => e.date === dateKey);
-
-        let excuseBadge = `<span class="text-xs text-slate-400">-</span>`;
-        if (status === 'absent') {
-            if (matchExcuse) {
-                if (matchExcuse.status === 'approved') {
-                    excuseBadge = `<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium">عذر مقبول: ${matchExcuse.reasonType}</span>`;
-                } else {
-                    excuseBadge = `<span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">عذر قيد المراجعة</span>`;
-                }
-            } else {
-                excuseBadge = `<button type="button" onclick="openExcuseModalWithDate('${dateKey}')" class="text-xs px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold border border-rose-200 transition">تقديم عذر</button>`;
-            }
-        }
-
-        return `
-            <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition">
-                <td class="py-3 px-4 font-bold text-slate-800 text-sm">${dayName}</td>
-                <td class="py-3 px-4 font-mono text-xs text-slate-500">${dateKey}</td>
-                <td class="py-3 px-4">${getStatusBadge(status)}</td>
-                <td class="py-3 px-4">${excuseBadge}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function renderParentNotesFeed(child) {
-    const feedContainer = document.getElementById('parent-notes-feed');
-    if (!feedContainer) return;
-
-    const allNotes = SchoolData.getNotes().filter(n => n.studentId === child.id);
-
-    if (allNotes.length === 0) {
-        feedContainer.innerHTML = `
-            <div class="text-center py-12 text-slate-400 bg-white rounded-2xl border border-slate-100 p-6">
-                <i class="fa-regular fa-comment-smile text-4xl text-sky-300 mb-3"></i>
-                <h4 class="font-bold text-slate-700">لا توجد ملاحظات مرسلة حتى الآن</h4>
-                <p class="text-xs text-slate-400 mt-1">سوف تظهر هنا أي إشعارات أو ملاحظات دراسية وسلوكية يرسلها المعلمون بخصوص ${child.fullName}</p>
-            </div>
-        `;
-        return;
-    }
-
-    feedContainer.innerHTML = allNotes.map(note => {
-        const typeConfig = getNoteTypeConfig(note.type);
-        return `
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md transition flex flex-col gap-3 relative overflow-hidden">
-                <div class="flex items-start justify-between gap-3">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${typeConfig.badgeClass}">
-                            <i class="${typeConfig.icon}"></i>
-                            <span>${typeConfig.label}</span>
-                        </span>
-                        ${!note.isRead ? '<span class="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">جديد</span>' : ''}
-                    </div>
-                    <span class="text-xs text-slate-400">${note.formattedDate}</span>
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-slate-900 text-base leading-snug">${note.title}</h4>
-                    <p class="text-sm text-slate-600 mt-2 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">${note.content}</p>
-                </div>
-
-                <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                    <div class="flex items-center gap-2 text-slate-600">
-                        <i class="fa-solid fa-chalkboard-user text-sky-600"></i>
-                        <span>المرسل: <strong class="text-slate-800">${note.teacherName}</strong></span>
-                    </div>
-
-                    ${note.isRead ? `
-                        <span class="text-emerald-600 flex items-center gap-1 font-semibold text-xs">
-                            <i class="fa-solid fa-check-double"></i>
-                            <span>تم الاطلاع</span>
-                        </span>
-                    ` : `
-                        <button type="button" 
-                            onclick="acknowledgeNote('${note.id}')"
-                            class="px-3 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold transition flex items-center gap-1">
-                            <i class="fa-regular fa-eye"></i>
-                            <span>تأكيد الاطلاع</span>
-                        </button>
-                    `}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function acknowledgeNote(noteId) {
-    SchoolData.markNoteAsRead(noteId);
-    const activeChild = SchoolData.getStudents().find(s => s.id === AppState.selectedParentChildId);
-    if (activeChild) {
-        renderParentNotesFeed(activeChild);
-    }
-    showToast('تم تأكيد اطلاعك على الملاحظة وإشعار إدارة المدرسة', 'success');
-}
-
-function renderParentExcusesList(child) {
-    const container = document.getElementById('parent-excuses-container');
-    if (!container) return;
-
-    const excuses = SchoolData.getExcuses().filter(e => e.studentId === child.id);
-
-    if (excuses.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-400 py-3 text-center">لا توجد طلبات أعذار سابقة</p>`;
-        return;
-    }
-
-    container.innerHTML = excuses.map(excuse => {
-        let statusBadge = `<span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-bold">قيد المراجعة</span>`;
-        if (excuse.status === 'approved') {
-            statusBadge = `<span class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold">مقبول</span>`;
-        } else if (excuse.status === 'rejected') {
-            statusBadge = `<span class="bg-rose-100 text-rose-800 text-xs px-2.5 py-0.5 rounded-full font-bold">مرفوض</span>`;
-        }
-
-        return `
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs flex flex-col gap-1.5">
-                <div class="flex items-center justify-between">
-                    <span class="font-bold text-slate-800">عذر غياب: ${excuse.reasonType}</span>
-                    ${statusBadge}
-                </div>
-                <div class="text-slate-500 font-mono">تاريخ الغياب: ${excuse.date}</div>
-                <div class="text-slate-600">${excuse.reasonDetail}</div>
-                ${excuse.responseNote ? `<div class="text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-200/60 mt-1">رد الإدارة: ${excuse.responseNote}</div>` : ''}
-            </div>
-        `;
-    }).join('');
-}
-
-// -------------------------------------------------------------
-// Absence Excuse Modal
-// -------------------------------------------------------------
-function openExcuseModalWithDate(date) {
-    const modal = document.getElementById('submit-excuse-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        if (date) {
-            document.getElementById('excuse-date-input').value = date;
-        }
-    }
-}
-
-function closeExcuseModal() {
-    const modal = document.getElementById('submit-excuse-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        document.getElementById('submit-excuse-form')?.reset();
-    }
-}
-
-function handleSubmitExcuseForm(e) {
-    e.preventDefault();
-    const activeChild = SchoolData.getStudents().find(s => s.id === AppState.selectedParentChildId);
-    if (!activeChild) return;
-
-    const date = document.getElementById('excuse-date-input').value;
-    const reasonType = document.getElementById('excuse-type-select').value;
-    const reasonDetail = document.getElementById('excuse-detail-input').value.trim();
-
-    if (!date || !reasonDetail) {
-        showToast('يرجى تحديد تاريخ الغياب وكتابة توضيح العذر', 'warning');
-        return;
-    }
-
-    SchoolData.addExcuse({
-        studentId: activeChild.id,
-        studentName: activeChild.fullName,
-        date,
-        reasonType,
-        reasonDetail
-    });
-
-    closeExcuseModal();
-    renderParentPortal();
-    showToast('تم إرسال طلب عذر الغياب إلى إدارة المدرسة للمراجعة والاعتماد', 'success');
-}
-
-// -------------------------------------------------------------
-// UI Event Listeners
-// -------------------------------------------------------------
-function initEventListeners() {
-    // Login form tabs
-    const teacherTabBtn = document.getElementById('tab-btn-teacher');
-    const parentTabBtn = document.getElementById('tab-btn-parent');
-    const teacherForm = document.getElementById('form-teacher-login');
-    const parentForm = document.getElementById('form-parent-login');
-
-    if (teacherTabBtn && parentTabBtn) {
-        teacherTabBtn.addEventListener('click', () => {
-            teacherTabBtn.classList.add('bg-navy-800', 'text-white', 'shadow-sm');
-            teacherTabBtn.classList.remove('text-slate-600', 'hover:text-slate-900');
-            parentTabBtn.classList.remove('bg-navy-800', 'text-white', 'shadow-sm');
-            parentTabBtn.classList.add('text-slate-600', 'hover:text-slate-900');
-            teacherForm.classList.remove('hidden');
-            parentForm.classList.add('hidden');
-        });
-
-        parentTabBtn.addEventListener('click', () => {
-            parentTabBtn.classList.add('bg-navy-800', 'text-white', 'shadow-sm');
-            parentTabBtn.classList.remove('text-slate-600', 'hover:text-slate-900');
-            teacherTabBtn.classList.remove('bg-navy-800', 'text-white', 'shadow-sm');
-            teacherTabBtn.classList.add('text-slate-600', 'hover:text-slate-900');
-            parentForm.classList.remove('hidden');
-            teacherForm.classList.add('hidden');
-        });
-    }
-
-    // Teacher login submit
-    teacherForm?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = document.getElementById('teacher-email').value;
-        const name = email.includes('sara') ? 'أ. سارة القحطاني' : 'أ. عبد الله المنصور';
-        loginAsTeacher(name, email.includes('sara') ? 'c4b' : 'c4a');
-    });
-
-    // Parent login submit
-    parentForm?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const phone = document.getElementById('parent-phone').value || '0501234567';
-        loginAsParent(phone, 'عبد الله السعيد (ولي أمر)');
-    });
-
-    // Date picker change
-    const datePicker = document.getElementById('attendance-date-picker');
-    datePicker?.addEventListener('change', (e) => {
-        AppState.selectedDate = e.target.value;
-        renderTeacherDashboard();
-    });
-
-    // Previous / Next Date arrows
-    document.getElementById('prev-date-btn')?.addEventListener('click', () => {
-        adjustSelectedDate(-1);
-    });
-    document.getElementById('next-date-btn')?.addEventListener('click', () => {
-        adjustSelectedDate(1);
-    });
-    document.getElementById('today-date-btn')?.addEventListener('click', () => {
-        AppState.selectedDate = getFormattedDateString(new Date());
-        renderTeacherDashboard();
-    });
-
-    // Class Filter change
-    document.getElementById('class-filter-select')?.addEventListener('change', (e) => {
-        AppState.selectedClass = e.target.value;
-        renderAttendanceList();
-        renderQuickStats();
-    });
-
-    // Student Search input
-    document.getElementById('student-search-input')?.addEventListener('input', (e) => {
-        AppState.searchQuery = e.target.value;
-        renderAttendanceList();
-        renderQuickStats();
-    });
-
-    // Notes category filters in teacher dashboard
-    document.querySelectorAll('.note-filter-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.note-filter-btn').forEach(b => {
-                b.classList.remove('bg-sky-600', 'text-white');
-                b.classList.add('bg-slate-100', 'text-slate-700');
-            });
-            const clicked = e.currentTarget;
-            clicked.classList.remove('bg-slate-100', 'text-slate-700');
-            clicked.classList.add('bg-sky-600', 'text-white');
-            AppState.notesFilter = clicked.dataset.filter || 'all';
-            renderTeacherNotesFeed();
-        });
-    });
-
-    // Forms
-    document.getElementById('add-student-form')?.addEventListener('submit', handleAddStudentForm);
-    document.getElementById('add-note-form')?.addEventListener('submit', handleAddNoteForm);
-    document.getElementById('submit-excuse-form')?.addEventListener('submit', handleSubmitExcuseForm);
-}
-
-function adjustSelectedDate(offsetDays) {
-    const parts = AppState.selectedDate.split('-');
-    const current = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-    current.setDate(current.getDate() + offsetDays);
-    AppState.selectedDate = getFormattedDateString(current);
-    renderTeacherDashboard();
-}
-
-// -------------------------------------------------------------
-// Toast Notifications
-// -------------------------------------------------------------
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
+document.addEventListener('DOMContentLoaded', async () => {
+  // 1. تهيئة النظام والبيانات المخزنة الدائمة
+  if (window.StorageManager) {
+    await window.StorageManager.init();
+  }
+
+  // المتغيرات العامة لحالة التطبيق
+  let currentActiveDepartment = null;
+  let currentSelectedAttendanceDate = new Date().toISOString().split('T')[0];
+  let stagedAttendanceChanges = {};
+
+  // عناصر واجهة المستخدم الرئيسية
+  const views = {
+    login: document.getElementById('view-login'),
+    dashboard: document.getElementById('view-department-dashboard'),
+    portal: document.getElementById('view-trainee-parent-portal'),
+    admin: document.getElementById('view-admin-dashboard')
+  };
+
+  const navTabs = {
+    login: document.getElementById('tabNavLogin'),
+    dashboard: document.getElementById('tabNavDashboard'),
+    portal: document.getElementById('tabNavPortal'),
+    admin: document.getElementById('tabNavAdmin')
+  };
+
+  const userSessionBadge = document.getElementById('userSessionBadge');
+  const sessionUserName = document.getElementById('sessionUserName');
+  const sessionDeptBadge = document.getElementById('sessionDeptBadge');
+  const btnLogout = document.getElementById('btnLogout');
+
+  // عناصر محاكي الـ IP
+  const clientIpInput = document.getElementById('clientIpInput');
+  const quickIpButtons = document.querySelectorAll('.btn-ip-quick[data-ip]');
+
+  // تبويبات نوع تسجيل الدخول
+  const tabLoginTypeEngineer = document.getElementById('tabLoginTypeEngineer');
+  const tabLoginTypeUser = document.getElementById('tabLoginTypeUser');
+  const tabLoginTypeAdmin = document.getElementById('tabLoginTypeAdmin');
+
+  const engineerLoginSection = document.getElementById('engineerLoginSection');
+  const userLoginSection = document.getElementById('userLoginSection');
+  const adminLoginSection = document.getElementById('adminLoginSection');
+
+  // نماذج تسجيل الدخول
+  const engineerLoginForm = document.getElementById('engineerLoginForm');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const securityAlertBox = document.getElementById('securityAlertBox');
+  const detectedIpDisplay = document.getElementById('detectedIpDisplay');
+  const expectedIpDisplay = document.getElementById('expectedIpDisplay');
+
+  const userLoginForm = document.getElementById('userLoginForm');
+  const userLoginCode = document.getElementById('userLoginCode');
+  const userLoginPassword = document.getElementById('userLoginPassword');
+
+  const adminLoginForm = document.getElementById('adminLoginForm');
+  const adminEmail = document.getElementById('adminEmail');
+  const adminPassword = document.getElementById('adminPassword');
+
+  // عناصر لوحة تحكم القسم
+  const deptHeaderName = document.getElementById('deptHeaderName');
+  const deptHeaderDesc = document.getElementById('deptHeaderDesc');
+  const deptHeaderIcon = document.getElementById('deptHeaderIcon');
+  const deptCodePill = document.getElementById('deptCodePill');
+  const deptIpPill = document.getElementById('deptIpPill');
+  const deptBuildingPill = document.getElementById('deptBuildingPill');
+  const deptSupervisorPill = document.getElementById('deptSupervisorPill');
+
+  const statTotalTrainees = document.getElementById('statTotalTrainees');
+  const statTodayAttendanceRate = document.getElementById('statTodayAttendanceRate');
+  const statAvgPractical = document.getElementById('statAvgPractical');
+  const statAvgSafety = document.getElementById('statAvgSafety');
+
+  const attendanceDatePicker = document.getElementById('attendanceDatePicker');
+  const attendanceTableBody = document.getElementById('attendanceTableBody');
+  const btnMarkAllPresent = document.getElementById('btnMarkAllPresent');
+  const btnResetDayAttendance = document.getElementById('btnResetDayAttendance');
+  const btnSaveAttendance = document.getElementById('btnSaveAttendance');
+
+  const evaluationsTableBody = document.getElementById('evaluationsTableBody');
+  const equipmentTableBody = document.getElementById('equipmentTableBody');
+  const subnavBtns = document.querySelectorAll('.subnav-btn');
+
+  // عناصر النوافذ المنبثقة
+  const btnOpenAddTraineeModal = document.getElementById('btnOpenAddTraineeModal');
+  const modalAddTrainee = document.getElementById('modalAddTrainee');
+  const formAddTrainee = document.getElementById('formAddTrainee');
+
+  const modalEvaluateTrainee = document.getElementById('modalEvaluateTrainee');
+  const formEvaluateTrainee = document.getElementById('formEvaluateTrainee');
+  const evalTraineeId = document.getElementById('evalTraineeId');
+  const evalModalTraineeName = document.getElementById('evalModalTraineeName');
+  const evalModalTraineeCode = document.getElementById('evalModalTraineeCode');
+
+  // عناصر بوابة المتدرب وولي الأمر
+  const portalUserLoginHero = document.getElementById('portalUserLoginHero');
+  const portalLoginForm = document.getElementById('portalLoginForm');
+  const portalInputCode = document.getElementById('portalInputCode');
+  const portalInputPassword = document.getElementById('portalInputPassword');
+  const portalActiveUserBar = document.getElementById('portalActiveUserBar');
+  const portalActiveUserName = document.getElementById('portalActiveUserName');
+  const portalActiveUserCode = document.getElementById('portalActiveUserCode');
+  const btnPortalLogout = document.getElementById('btnPortalLogout');
+
+  const traineeReportContainer = document.getElementById('traineeReportContainer');
+  const btnPrintReport = document.getElementById('btnPrintReport');
+  const quickTraineeButtons = document.querySelectorAll('.quick-trainee-selector button[data-code]');
+
+  // عناصر لوحة الإدارة
+  const adminDepartmentsList = document.getElementById('adminDepartmentsList');
+  const btnOpenAddDepartmentModal = document.getElementById('btnOpenAddDepartmentModal');
+  const modalAddDepartment = document.getElementById('modalAddDepartment');
+  const formAddDepartment = document.getElementById('formAddDepartment');
+  const auditLogTableBody = document.getElementById('auditLogTableBody');
+  const btnClearAuditLog = document.getElementById('btnClearAuditLog');
+  const btnExportPermanentBackup = document.getElementById('btnExportPermanentBackup');
+  const btnResetAllDefaults = document.getElementById('btnResetAllDefaults');
+
+  // =========================================================================
+  // وظائف مساعدة عامة وتنبيهات Toast
+  // =========================================================================
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
     if (!container) return;
 
     const toast = document.createElement('div');
-    toast.className = 'toast-item flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold max-w-md';
-
-    let icon = 'fa-solid fa-circle-info';
-    let colors = 'bg-white text-slate-800 border-slate-200';
-
-    if (type === 'success') {
-        icon = 'fa-solid fa-circle-check text-emerald-500';
-        colors = 'bg-white text-slate-900 border-emerald-200 shadow-emerald-500/10';
-    } else if (type === 'warning') {
-        icon = 'fa-solid fa-triangle-exclamation text-amber-500';
-        colors = 'bg-white text-slate-900 border-amber-200';
-    } else if (type === 'error') {
-        icon = 'fa-solid fa-circle-xmark text-rose-500';
-        colors = 'bg-white text-slate-900 border-rose-200';
-    } else {
-        icon = 'fa-solid fa-circle-info text-sky-500';
-        colors = 'bg-white text-slate-900 border-sky-200';
-    }
-
-    toast.className += ` ${colors}`;
-    toast.innerHTML = `
-        <i class="${icon} text-lg shrink-0"></i>
-        <span class="flex-1">${message}</span>
-        <button type="button" class="text-slate-400 hover:text-slate-600 transition" onclick="this.parentElement.remove()">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    `;
-
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span>${message}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(10px)';
-        toast.style.transition = 'all 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      toast.style.transition = 'all 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
     }, 4000);
-}
+  }
 
-// Print attendance sheet
-function printAttendanceSheet() {
-    window.print();
-}
+  function getIconEmoji(iconName) {
+    const map = {
+      'code': '💻',
+      'disc': '⚙️',
+      'cpu': '🎛️',
+      'zap': '⚡',
+      'layers': '🏗️',
+      'wrench': '🔧'
+    };
+    return map[iconName] || '🛠️';
+  }
 
-// Global Exports
-window.loginAsTeacher = loginAsTeacher;
-window.loginAsParent = loginAsParent;
-window.logout = logout;
-window.switchRole = switchRole;
-window.setStudentStatus = setStudentStatus;
-window.markAllFiltered = markAllFiltered;
-window.clearAllFiltered = clearAllFiltered;
-window.saveAttendance = saveAttendance;
-window.openAddStudentModal = openAddStudentModal;
-window.closeAddStudentModal = closeAddStudentModal;
-window.openNoteModalForStudent = openNoteModalForStudent;
-window.closeNoteModal = closeNoteModal;
-window.openExcuseModalWithDate = openExcuseModalWithDate;
-window.closeExcuseModal = closeExcuseModal;
-window.acknowledgeNote = acknowledgeNote;
-window.printAttendanceSheet = printAttendanceSheet;
-window.selectParentChild = selectParentChild;
-window.showToast = showToast;
+  // =========================================================================
+  // إدارة محاكي عنوان الـ IP (Simulate Lab IP Logic)
+  // =========================================================================
+  function initIpSimulator() {
+    const savedIp = window.AuthManager ? window.AuthManager.getCurrentClientIp() : '192.168.10.25';
+    if (clientIpInput) {
+      clientIpInput.value = savedIp;
+    }
+    updateIpButtonsState(savedIp);
+
+    if (clientIpInput) {
+      clientIpInput.addEventListener('input', (e) => {
+        const newIp = e.target.value.trim();
+        if (window.AuthManager) window.AuthManager.setClientIp(newIp);
+        updateIpButtonsState(newIp);
+      });
+    }
+
+    quickIpButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ip = btn.getAttribute('data-ip');
+        if (ip && clientIpInput) {
+          clientIpInput.value = ip;
+          if (window.AuthManager) window.AuthManager.setClientIp(ip);
+          updateIpButtonsState(ip);
+          showToast(`تم تعيين عنوان IP المحاكى إلى: ${ip}`, 'info');
+        }
+      });
+    });
+  }
+
+  function updateIpButtonsState(currentIp) {
+    quickIpButtons.forEach(btn => {
+      const btnIp = btn.getAttribute('data-ip');
+      if (btnIp === currentIp) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
+  // =========================================================================
+  // نظام التنقل بين المشاهد (Views Switching)
+  // =========================================================================
+  function switchView(viewKey) {
+    Object.values(views).forEach(v => {
+      if (v) v.classList.remove('active');
+    });
+
+    Object.values(navTabs).forEach(t => {
+      if (t) t.classList.remove('active');
+    });
+
+    if (views[viewKey]) {
+      views[viewKey].classList.add('active');
+    }
+
+    if (navTabs[viewKey]) {
+      navTabs[viewKey].classList.add('active');
+    }
+
+    if (viewKey === 'admin') {
+      renderAdminDashboard();
+    }
+  }
+
+  Object.keys(navTabs).forEach(key => {
+    const btn = navTabs[key];
+    if (btn) {
+      btn.addEventListener('click', () => {
+        switchView(key);
+      });
+    }
+  });
+
+  const brandHomeLink = document.getElementById('brandHomeLink');
+  if (brandHomeLink) {
+    brandHomeLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const session = window.AuthManager ? window.AuthManager.getSession() : null;
+      if (session) {
+        if (session.role === 'admin') switchView('admin');
+        else if (session.role === 'trainee') switchView('portal');
+        else switchView('dashboard');
+      } else {
+        switchView('login');
+      }
+    });
+  }
+
+  // =========================================================================
+  // إدارة تبويبات نوع تسجيل الدخول في الواجهة الرئيسية
+  // =========================================================================
+  function setLoginTab(tabKey) {
+    [tabLoginTypeEngineer, tabLoginTypeUser, tabLoginTypeAdmin].forEach(b => b && b.classList.remove('active'));
+    [engineerLoginSection, userLoginSection, adminLoginSection].forEach(s => s && (s.style.display = 'none'));
+
+    if (tabKey === 'engineer') {
+      if (tabLoginTypeEngineer) tabLoginTypeEngineer.classList.add('active');
+      if (engineerLoginSection) engineerLoginSection.style.display = 'block';
+    } else if (tabKey === 'user') {
+      if (tabLoginTypeUser) tabLoginTypeUser.classList.add('active');
+      if (userLoginSection) userLoginSection.style.display = 'block';
+    } else if (tabKey === 'admin') {
+      if (tabLoginTypeAdmin) tabLoginTypeAdmin.classList.add('active');
+      if (adminLoginSection) adminLoginSection.style.display = 'block';
+    }
+  }
+
+  if (tabLoginTypeEngineer) tabLoginTypeEngineer.addEventListener('click', () => setLoginTab('engineer'));
+  if (tabLoginTypeUser) tabLoginTypeUser.addEventListener('click', () => setLoginTab('user'));
+  if (tabLoginTypeAdmin) tabLoginTypeAdmin.addEventListener('click', () => setLoginTab('admin'));
+
+  // =========================================================================
+  // إدارة جلسة المستخدم الحالية وشريط الحالة
+  // =========================================================================
+  function updateSessionUI() {
+    const session = window.AuthManager ? window.AuthManager.getSession() : null;
+
+    if (session) {
+      if (userSessionBadge) userSessionBadge.style.display = 'flex';
+      if (btnLogout) btnLogout.style.display = 'inline-block';
+      if (navTabs.login) navTabs.login.style.display = 'none';
+
+      if (session.role === 'admin') {
+        if (sessionUserName) sessionUserName.textContent = 'إدارة المركز العام';
+        if (sessionDeptBadge) sessionDeptBadge.textContent = 'HQ-ADMIN';
+        if (navTabs.dashboard) navTabs.dashboard.style.display = 'none';
+        if (navTabs.admin) navTabs.admin.style.display = 'inline-flex';
+      } else if (session.role === 'trainee') {
+        if (sessionUserName) sessionUserName.textContent = `المتدرب: ${session.trainee.name}`;
+        if (sessionDeptBadge) sessionDeptBadge.textContent = session.trainee.code;
+        if (navTabs.dashboard) navTabs.dashboard.style.display = 'none';
+        if (navTabs.admin) navTabs.admin.style.display = 'none';
+      } else {
+        if (sessionUserName) sessionUserName.textContent = session.engineer.name;
+        if (sessionDeptBadge) sessionDeptBadge.textContent = session.departmentCode;
+        if (navTabs.dashboard) navTabs.dashboard.style.display = 'inline-flex';
+        if (navTabs.admin) navTabs.admin.style.display = 'none';
+      }
+    } else {
+      if (userSessionBadge) userSessionBadge.style.display = 'none';
+      if (btnLogout) btnLogout.style.display = 'none';
+      if (navTabs.login) navTabs.login.style.display = 'inline-flex';
+      if (navTabs.dashboard) navTabs.dashboard.style.display = 'none';
+      if (navTabs.admin) navTabs.admin.style.display = 'none';
+    }
+  }
+
+  if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+      if (window.AuthManager) window.AuthManager.logout();
+      currentActiveDepartment = null;
+      updateSessionUI();
+      if (portalUserLoginHero) portalUserLoginHero.style.display = 'block';
+      if (portalActiveUserBar) portalActiveUserBar.style.display = 'none';
+      if (traineeReportContainer) traineeReportContainer.classList.remove('visible');
+      switchView('login');
+      showToast('تم تسجيل الخروج بنجاح.', 'info');
+    });
+  }
+
+  // =========================================================================
+  // 1. تسجيل دخول مهندسي الأقسام وفحص الـ IP وكلمة المرور من ملف password
+  // =========================================================================
+  if (engineerLoginForm) {
+    engineerLoginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value.trim();
+      const clientIp = clientIpInput ? clientIpInput.value.trim() : '192.168.10.25';
+
+      const result = window.AuthManager.loginEngineer(email, password, clientIp);
+
+      if (result.success) {
+        if (securityAlertBox) securityAlertBox.classList.remove('visible');
+        showToast(`مرحباً بك يا ${result.session.engineer.name}، تم التحقق من كلمة المرور و IP المعمل.`, 'success');
+        updateSessionUI();
+        currentActiveDepartment = result.department;
+        renderDepartmentDashboard(currentActiveDepartment);
+        switchView('dashboard');
+      } else {
+        if (result.errorType === 'IP_MISMATCH') {
+          if (securityAlertBox) {
+            securityAlertBox.classList.add('visible');
+            const alertMsg = document.getElementById('securityAlertMessage');
+            if (alertMsg) alertMsg.textContent = result.message;
+            if (detectedIpDisplay) detectedIpDisplay.textContent = result.details.clientIp;
+            if (expectedIpDisplay) expectedIpDisplay.textContent = result.details.authorizedIp;
+          }
+          showToast(result.message, 'danger');
+        } else {
+          if (securityAlertBox) securityAlertBox.classList.remove('visible');
+          showToast(result.message || 'بيانات الدخول أو كلمة المرور غير صحيحة.', 'danger');
+        }
+      }
+    });
+  }
+
+  // =========================================================================
+  // 2. تسجيل دخول المستخدمين / المتدربين بكلمة المرور (User Password Login)
+  // =========================================================================
+  function handleUserLogin(codeOrId, password) {
+    const result = window.AuthManager.loginUser(codeOrId, password);
+    if (result.success) {
+      updateSessionUI();
+      displayTraineeReport(result.traineeResult);
+
+      if (portalUserLoginHero) portalUserLoginHero.style.display = 'none';
+      if (portalActiveUserBar) portalActiveUserBar.style.display = 'flex';
+      if (portalActiveUserName) portalActiveUserName.textContent = result.traineeResult.trainee.name;
+      if (portalActiveUserCode) portalActiveUserCode.textContent = result.traineeResult.trainee.code;
+
+      switchView('portal');
+      showToast(`أهلاً بك يا ${result.traineeResult.trainee.name}، تم تسجيل دخولك بنجاح.`, 'success');
+    } else {
+      showToast(result.message, 'danger');
+    }
+  }
+
+  if (userLoginForm) {
+    userLoginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const code = userLoginCode.value.trim();
+      const pass = userLoginPassword.value.trim();
+      handleUserLogin(code, pass);
+    });
+  }
+
+  if (portalLoginForm) {
+    portalLoginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const code = portalInputCode.value.trim();
+      const pass = portalInputPassword.value.trim();
+      handleUserLogin(code, pass);
+    });
+  }
+
+  if (btnPortalLogout) {
+    btnPortalLogout.addEventListener('click', () => {
+      if (window.AuthManager) window.AuthManager.logout();
+      updateSessionUI();
+      if (portalUserLoginHero) portalUserLoginHero.style.display = 'block';
+      if (portalActiveUserBar) portalActiveUserBar.style.display = 'none';
+      if (traineeReportContainer) traineeReportContainer.classList.remove('visible');
+      showToast('تم تسجيل خروج المتدرب.', 'info');
+    });
+  }
+
+  // =========================================================================
+  // 3. تسجيل دخول إدارة المركز بكلمة المرور
+  // =========================================================================
+  if (adminLoginForm) {
+    adminLoginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = adminEmail.value.trim();
+      const pass = adminPassword.value.trim();
+
+      const res = window.AuthManager.loginAdmin(email, pass);
+      if (res.success) {
+        updateSessionUI();
+        switchView('admin');
+        showToast('تم تسجيل الدخول بصلاحيات الإدارة المركزية.', 'success');
+      } else {
+        showToast(res.message, 'danger');
+      }
+    });
+  }
+
+  // أزرار الدخول السريع للاختبار التجريبي
+  document.querySelectorAll('.btn-fill-valid').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setLoginTab('engineer');
+      const email = btn.getAttribute('data-email');
+      const pass = btn.getAttribute('data-pass');
+      const ip = btn.getAttribute('data-ip');
+
+      if (loginEmail) loginEmail.value = email;
+      if (loginPassword) loginPassword.value = pass;
+      if (clientIpInput) {
+        clientIpInput.value = ip;
+        if (window.AuthManager) window.AuthManager.setClientIp(ip);
+        updateIpButtonsState(ip);
+      }
+
+      setTimeout(() => {
+        if (engineerLoginForm) engineerLoginForm.dispatchEvent(new Event('submit'));
+      }, 100);
+    });
+  });
+
+  document.querySelectorAll('.btn-fill-invalid').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setLoginTab('engineer');
+      const email = btn.getAttribute('data-email');
+      const pass = btn.getAttribute('data-pass');
+      const ip = btn.getAttribute('data-ip');
+
+      if (loginEmail) loginEmail.value = email;
+      if (loginPassword) loginPassword.value = pass;
+      if (clientIpInput) {
+        clientIpInput.value = ip;
+        if (window.AuthManager) window.AuthManager.setClientIp(ip);
+        updateIpButtonsState(ip);
+      }
+
+      setTimeout(() => {
+        if (engineerLoginForm) engineerLoginForm.dispatchEvent(new Event('submit'));
+      }, 100);
+    });
+  });
+
+  document.querySelectorAll('.btn-fill-user').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setLoginTab('user');
+      const code = btn.getAttribute('data-user-code');
+      const pass = btn.getAttribute('data-user-pass');
+      if (userLoginCode) userLoginCode.value = code;
+      if (userLoginPassword) userLoginPassword.value = pass;
+
+      setTimeout(() => {
+        if (userLoginForm) userLoginForm.dispatchEvent(new Event('submit'));
+      }, 100);
+    });
+  });
+
+  document.querySelectorAll('.btn-fill-admin').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setLoginTab('admin');
+      if (adminEmail) adminEmail.value = 'admin@vtc.edu.sa';
+      if (adminPassword) adminPassword.value = 'admin123';
+
+      setTimeout(() => {
+        if (adminLoginForm) adminLoginForm.dispatchEvent(new Event('submit'));
+      }, 100);
+    });
+  });
+
+  quickTraineeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = btn.getAttribute('data-code');
+      const pass = btn.getAttribute('data-pass');
+      if (portalInputCode) portalInputCode.value = code;
+      if (portalInputPassword) portalInputPassword.value = pass;
+      handleUserLogin(code, pass);
+    });
+  });
+
+  // =========================================================================
+  // لوحة تحكم القسم التدريبي (Department Dashboard Logic)
+  // =========================================================================
+  function renderDepartmentDashboard(department) {
+    if (!department) return;
+
+    if (deptHeaderName) deptHeaderName.textContent = department.name;
+    if (deptHeaderDesc) deptHeaderDesc.textContent = department.description;
+    if (deptHeaderIcon) deptHeaderIcon.textContent = getIconEmoji(department.icon);
+    if (deptCodePill) deptCodePill.textContent = department.code;
+    if (deptIpPill) {
+      deptIpPill.innerHTML = `<span>🔒 اتصال شبكي آمن مصرح به (IP: ${department.authorizedIp})</span>`;
+    }
+    if (deptBuildingPill) {
+      deptBuildingPill.innerHTML = `<span>📍 ${department.building}</span>`;
+    }
+    if (deptSupervisorPill) {
+      deptSupervisorPill.innerHTML = `<span>👨‍🏫 المشرف: ${department.engineer.name}</span>`;
+    }
+
+    updateDepartmentStats(department);
+
+    if (attendanceDatePicker) {
+      attendanceDatePicker.value = currentSelectedAttendanceDate;
+    }
+    stagedAttendanceChanges = {};
+    renderAttendanceTable(department, currentSelectedAttendanceDate);
+    renderEvaluationsTable(department);
+    renderEquipmentTable(department);
+  }
+
+  function updateDepartmentStats(department) {
+    const stats = department.getDepartmentStats(currentSelectedAttendanceDate);
+    if (statTotalTrainees) statTotalTrainees.textContent = stats.totalTrainees;
+    if (statTodayAttendanceRate) statTodayAttendanceRate.textContent = `${stats.attendancePercentage}%`;
+    if (statAvgPractical) statAvgPractical.textContent = `${stats.avgPractical}/100`;
+    if (statAvgSafety) statAvgSafety.textContent = `${stats.avgSafety}%`;
+  }
+
+  subnavBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      subnavBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const targetSubviewId = btn.getAttribute('data-subview');
+      document.querySelectorAll('.subview-content').forEach(sub => {
+        sub.style.display = 'none';
+      });
+
+      const targetElem = document.getElementById(targetSubviewId);
+      if (targetElem) targetElem.style.display = 'block';
+    });
+  });
+
+  if (attendanceDatePicker) {
+    attendanceDatePicker.addEventListener('change', (e) => {
+      currentSelectedAttendanceDate = e.target.value;
+      stagedAttendanceChanges = {};
+      if (currentActiveDepartment) {
+        renderAttendanceTable(currentActiveDepartment, currentSelectedAttendanceDate);
+        updateDepartmentStats(currentActiveDepartment);
+      }
+    });
+  }
+
+  function renderAttendanceTable(department, date) {
+    if (!attendanceTableBody) return;
+    attendanceTableBody.innerHTML = '';
+
+    const trainees = department.getTrainees();
+    const existingRecords = department.getAttendanceForDate(date);
+
+    if (trainees.length === 0) {
+      attendanceTableBody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 24px; color: var(--slate-400);">
+            لا يوجد متدربون مسجلون في هذا القسم حتى الآن. انقر على زر "+ إضافة متدرب للقسم" للبدء.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    trainees.forEach((trainee, index) => {
+      const currentStatus = stagedAttendanceChanges[trainee.id] || existingRecords[trainee.id] || 'present';
+      const stats = department.getTraineeAttendanceStats(trainee.id);
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${index + 1}</td>
+        <td><span class="trainee-code-badge">${trainee.code}</span></td>
+        <td>
+          <div class="trainee-identity">
+            <span class="trainee-name">${trainee.name}</span>
+            <span style="font-size: 0.75rem; color: var(--slate-400);">هوية: ${trainee.nationalId} | ${trainee.phone}</span>
+          </div>
+        </td>
+        <td>${trainee.group}</td>
+        <td>
+          <div class="attendance-btn-group" data-trainee-id="${trainee.id}">
+            <button type="button" class="btn-att ${currentStatus === 'present' ? 'active-present' : ''}" data-status="present">حاضر</button>
+            <button type="button" class="btn-att ${currentStatus === 'late' ? 'active-late' : ''}" data-status="late">متأخر</button>
+            <button type="button" class="btn-att ${currentStatus === 'absent' ? 'active-absent' : ''}" data-status="absent">غائب</button>
+            <button type="button" class="btn-att ${currentStatus === 'excused' ? 'active-excused' : ''}" data-status="excused">مأذون</button>
+          </div>
+        </td>
+        <td>
+          <span class="score-badge ${stats.attendanceRate >= 85 ? 'high' : stats.attendanceRate >= 70 ? 'medium' : 'low'}">
+            ${stats.attendanceRate}% (${stats.present} يوم)
+          </span>
+        </td>
+        <td>
+          <button type="button" class="btn-secondary btn-evaluate-trigger" data-trainee-id="${trainee.id}" style="font-size: 0.78rem; padding: 4px 10px;">
+            ⭐ تقييم
+          </button>
+        </td>
+      `;
+
+      const btnGroup = tr.querySelector('.attendance-btn-group');
+      const attButtons = btnGroup.querySelectorAll('.btn-att');
+      attButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const status = btn.getAttribute('data-status');
+          stagedAttendanceChanges[trainee.id] = status;
+
+          attButtons.forEach(b => {
+            b.classList.remove('active-present', 'active-absent', 'active-late', 'active-excused');
+          });
+
+          if (status === 'present') btn.classList.add('active-present');
+          else if (status === 'absent') btn.classList.add('active-absent');
+          else if (status === 'late') btn.classList.add('active-late');
+          else if (status === 'excused') btn.classList.add('active-excused');
+        });
+      });
+
+      tr.querySelector('.btn-evaluate-trigger').addEventListener('click', () => {
+        openEvaluationModal(trainee);
+      });
+
+      attendanceTableBody.appendChild(tr);
+    });
+  }
+
+  if (btnMarkAllPresent) {
+    btnMarkAllPresent.addEventListener('click', () => {
+      if (!currentActiveDepartment) return;
+      currentActiveDepartment.getTrainees().forEach(t => {
+        stagedAttendanceChanges[t.id] = 'present';
+      });
+      renderAttendanceTable(currentActiveDepartment, currentSelectedAttendanceDate);
+      showToast('تم تعيين جميع متدربي القسم كحاضرين.', 'info');
+    });
+  }
+
+  if (btnResetDayAttendance) {
+    btnResetDayAttendance.addEventListener('click', () => {
+      if (!currentActiveDepartment) return;
+      stagedAttendanceChanges = {};
+      renderAttendanceTable(currentActiveDepartment, currentSelectedAttendanceDate);
+      showToast('تمت استعادة السجل المحفوظ لهذا اليوم.', 'info');
+    });
+  }
+
+  // حفظ دائم لسجل الحضور في data/vtc_data.json
+  if (btnSaveAttendance) {
+    btnSaveAttendance.addEventListener('click', () => {
+      if (!currentActiveDepartment) return;
+      
+      currentActiveDepartment.recordAttendance(currentSelectedAttendanceDate, stagedAttendanceChanges);
+      if (window.StorageManager) {
+        window.StorageManager.saveDepartment(currentActiveDepartment);
+      }
+      stagedAttendanceChanges = {};
+      updateDepartmentStats(currentActiveDepartment);
+      renderAttendanceTable(currentActiveDepartment, currentSelectedAttendanceDate);
+      showToast(`تم الحفظ الدائم لسجل الحضور والغياب (${currentSelectedAttendanceDate}) في قاعدة البيانات.`, 'success');
+    });
+  }
+
+  function renderEvaluationsTable(department) {
+    if (!evaluationsTableBody) return;
+    evaluationsTableBody.innerHTML = '';
+
+    const trainees = department.getTrainees();
+
+    trainees.forEach(trainee => {
+      const latestEval = (trainee.evaluations && trainee.evaluations.length > 0) ? trainee.evaluations[0] : null;
+
+      const practicalVal = latestEval ? `${latestEval.practicalScore}/100` : 'لم يقيم';
+      const safetyVal = latestEval ? `${latestEval.safetyScore}%` : '—';
+      const totalScore = latestEval ? latestEval.totalScore : 0;
+      const latestNote = latestEval ? latestEval.notes : 'لا توجد ملاحظات مسجلة بعد';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="trainee-code-badge">${trainee.code}</span></td>
+        <td>
+          <span class="trainee-name">${trainee.name}</span>
+        </td>
+        <td>
+          <span class="score-badge ${totalScore >= 85 ? 'high' : totalScore >= 70 ? 'medium' : 'low'}">
+            ${practicalVal} (${totalScore} موزونة)
+          </span>
+        </td>
+        <td>
+          <span style="font-weight: 700; color: ${safetyVal !== '—' && parseInt(safetyVal) >= 90 ? '#34d399' : '#f87171'};">
+            ${safetyVal}
+          </span>
+        </td>
+        <td>
+          <div style="max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.82rem; color: var(--slate-300);">
+            ${latestNote}
+          </div>
+        </td>
+        <td>
+          <button type="button" class="btn-primary btn-eval-row" data-trainee-id="${trainee.id}" style="padding: 4px 12px; font-size: 0.78rem;">
+            + تقييم جديد
+          </button>
+        </td>
+      `;
+
+      tr.querySelector('.btn-eval-row').addEventListener('click', () => {
+        openEvaluationModal(trainee);
+      });
+
+      evaluationsTableBody.appendChild(tr);
+    });
+  }
+
+  function renderEquipmentTable(department) {
+    if (!equipmentTableBody) return;
+    equipmentTableBody.innerHTML = '';
+
+    department.equipment.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong style="color: var(--amber-400); font-family: 'Consolas', monospace;">${item.id}</strong></td>
+        <td><strong>${item.name}</strong></td>
+        <td style="color: var(--slate-400); font-size: 0.82rem;">${item.specs}</td>
+        <td>
+          <span class="dept-meta-pill ${item.status === 'operational' ? 'verified-ip' : ''}" style="display: inline-flex;">
+            ${item.status === 'operational' ? '✓ جاهزة للتشغيل والتدريب' : '⚠️ تحت الصيانة الدورية'}
+          </span>
+        </td>
+        <td>
+          <button type="button" class="btn-secondary btn-toggle-machine" style="font-size: 0.75rem; padding: 4px 8px;">
+            تغيير الحالة
+          </button>
+        </td>
+      `;
+
+      tr.querySelector('.btn-toggle-machine').addEventListener('click', () => {
+        item.status = (item.status === 'operational') ? 'maintenance' : 'operational';
+        if (window.StorageManager) window.StorageManager.saveDepartment(department);
+        renderEquipmentTable(department);
+        showToast(`تم تحديث حالة المعدة ${item.name} وحفظها بشكل دائم.`, 'info');
+      });
+
+      equipmentTableBody.appendChild(tr);
+    });
+  }
+
+  // =========================================================================
+  // نموذج إضافة متدرب جديد وتعيين كلمة المرور وحفظها في ملف password
+  // =========================================================================
+  if (btnOpenAddTraineeModal) {
+    btnOpenAddTraineeModal.addEventListener('click', () => {
+      if (modalAddTrainee) modalAddTrainee.classList.add('active');
+    });
+  }
+
+  if (formAddTrainee) {
+    formAddTrainee.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!currentActiveDepartment) return;
+
+      const name = document.getElementById('newTraineeName').value.trim();
+      const nationalId = document.getElementById('newTraineeNationalId').value.trim();
+      const phone = document.getElementById('newTraineePhone').value.trim();
+      const password = document.getElementById('newTraineePassword').value.trim() || 'user123';
+      const guardianName = document.getElementById('newGuardianName').value.trim();
+      const guardianPhone = document.getElementById('newGuardianPhone').value.trim();
+      const group = document.getElementById('newTraineeGroup').value.trim();
+      const safetyNotes = document.getElementById('newTraineeSafety').value.trim();
+
+      const newTrainee = currentActiveDepartment.addTrainee({
+        name,
+        nationalId,
+        phone,
+        guardianName,
+        guardianPhone,
+        group,
+        safetyNotes
+      });
+
+      // حفظ كلمة المرور في مدير كلمات المرور وملف password المنفصل
+      if (window.PasswordManager) {
+        window.PasswordManager.setPassword('users', newTrainee.code, password, {
+          name: newTrainee.name,
+          nationalId: newTrainee.nationalId,
+          department: currentActiveDepartment.id
+        });
+        window.PasswordManager.setPassword('users', newTrainee.nationalId, password, {
+          name: newTrainee.name,
+          code: newTrainee.code,
+          department: currentActiveDepartment.id
+        });
+      }
+
+      // حفظ دائم في قاعدة البيانات data/vtc_data.json
+      if (window.StorageManager) {
+        window.StorageManager.saveDepartment(currentActiveDepartment);
+      }
+
+      formAddTrainee.reset();
+      if (modalAddTrainee) modalAddTrainee.classList.remove('active');
+
+      renderAttendanceTable(currentActiveDepartment, currentSelectedAttendanceDate);
+      renderEvaluationsTable(currentActiveDepartment);
+      updateDepartmentStats(currentActiveDepartment);
+
+      showToast(`تم تسجيل المتدرب (${newTrainee.name}) بنجاح بكود [${newTrainee.code}] وحفظ كلمة المرور في ملف password.`, 'success');
+    });
+  }
+
+  // =========================================================================
+  // نموذج تقييم الأداء العملي والملاحظات
+  // =========================================================================
+  function openEvaluationModal(trainee) {
+    if (!modalEvaluateTrainee) return;
+    if (evalTraineeId) evalTraineeId.value = trainee.id;
+    if (evalModalTraineeName) evalModalTraineeName.textContent = trainee.name;
+    if (evalModalTraineeCode) evalModalTraineeCode.textContent = `الرقم الأكاديمي: ${trainee.code} | القسم: ${trainee.departmentName || currentActiveDepartment.name}`;
+
+    modalEvaluateTrainee.classList.add('active');
+  }
+
+  if (formEvaluateTrainee) {
+    formEvaluateTrainee.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!currentActiveDepartment) return;
+
+      const traineeId = evalTraineeId.value;
+      const title = document.getElementById('evalTitle').value.trim();
+      const practicalScore = Number(document.getElementById('evalPracticalScore').value);
+      const safetyScore = Number(document.getElementById('evalSafetyScore').value);
+      const maintenanceScore = Number(document.getElementById('evalMaintenanceScore').value);
+      const theoryScore = Number(document.getElementById('evalTheoryScore').value);
+      const noteType = document.getElementById('evalNoteType').value;
+      const notes = document.getElementById('evalNotes').value.trim();
+
+      currentActiveDepartment.addEvaluation(traineeId, {
+        title,
+        practicalScore,
+        safetyScore,
+        maintenanceScore,
+        theoryScore,
+        noteType,
+        notes,
+        evaluator: currentActiveDepartment.engineer.name
+      });
+
+      if (window.StorageManager) {
+        window.StorageManager.saveDepartment(currentActiveDepartment);
+      }
+
+      formEvaluateTrainee.reset();
+      if (modalEvaluateTrainee) modalEvaluateTrainee.classList.remove('active');
+
+      renderEvaluationsTable(currentActiveDepartment);
+      updateDepartmentStats(currentActiveDepartment);
+
+      showToast('تم اعتماد وحفظ التقييم العملي بشكل دائم في قاعدة البيانات.', 'success');
+    });
+  }
+
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const modalId = btn.getAttribute('data-close');
+      const targetModal = document.getElementById(modalId);
+      if (targetModal) targetModal.classList.remove('active');
+    });
+  });
+
+  // =========================================================================
+  // عرض تقرير المتدرب الشامل (Trainee Performance Report)
+  // =========================================================================
+  function displayTraineeReport(searchResult) {
+    const { trainee, department, stats } = searchResult;
+
+    const repName = document.getElementById('repName');
+    const repCode = document.getElementById('repCode');
+    const repNationalId = document.getElementById('repNationalId');
+    const repDepartment = document.getElementById('repDepartment');
+    const repAttendanceRate = document.getElementById('repAttendanceRate');
+    const repAttendanceCounts = document.getElementById('repAttendanceCounts');
+    const repPracticalScore = document.getElementById('repPracticalScore');
+    const repSafetyScore = document.getElementById('repSafetyScore');
+    const repTotalScore = document.getElementById('repTotalScore');
+    const repPhone = document.getElementById('repPhone');
+    const repGuardianName = document.getElementById('repGuardianName');
+    const repGuardianPhone = document.getElementById('repGuardianPhone');
+    const repEnrollDate = document.getElementById('repEnrollDate');
+    const repGroup = document.getElementById('repGroup');
+    const repSafetyNotes = document.getElementById('repSafetyNotes');
+    const repEvalTimeline = document.getElementById('repEvalTimeline');
+
+    if (repName) repName.textContent = trainee.name;
+    if (repCode) repCode.textContent = trainee.code;
+    if (repNationalId) repNationalId.textContent = trainee.nationalId;
+    if (repDepartment) repDepartment.textContent = department.name;
+
+    if (repAttendanceRate) repAttendanceRate.textContent = `${stats.attendanceRate}%`;
+    if (repAttendanceCounts) {
+      repAttendanceCounts.textContent = `${stats.present} حاضر | ${stats.late} متأخر | ${stats.absent} غائب`;
+    }
+
+    let practical = 0;
+    let safety = 0;
+    let total = 0;
+    if (trainee.evaluations && trainee.evaluations.length > 0) {
+      const latest = trainee.evaluations[0];
+      practical = latest.practicalScore;
+      safety = latest.safetyScore;
+      total = latest.totalScore;
+    }
+
+    if (repPracticalScore) repPracticalScore.textContent = `${practical}/100`;
+    if (repSafetyScore) repSafetyScore.textContent = `${safety}%`;
+    if (repTotalScore) repTotalScore.textContent = `${total}/100`;
+
+    if (repPhone) repPhone.textContent = trainee.phone;
+    if (repGuardianName) repGuardianName.textContent = trainee.guardianName;
+    if (repGuardianPhone) repGuardianPhone.textContent = trainee.guardianPhone;
+    if (repEnrollDate) repEnrollDate.textContent = trainee.enrollmentDate;
+    if (repGroup) repGroup.textContent = trainee.group;
+    if (repSafetyNotes) repSafetyNotes.textContent = trainee.safetyNotes;
+
+    if (repEvalTimeline) {
+      repEvalTimeline.innerHTML = '';
+      if (!trainee.evaluations || trainee.evaluations.length === 0) {
+        repEvalTimeline.innerHTML = '<p style="color: var(--slate-400);">لا توجد تقييمات مسجلة حتى الآن.</p>';
+      } else {
+        trainee.evaluations.forEach(ev => {
+          const item = document.createElement('div');
+          const isSafety = ev.noteType === 'safety';
+          const isExcellence = ev.noteType === 'excellence';
+
+          item.className = `eval-timeline-item ${isSafety ? 'safety-warning' : isExcellence ? 'excellence' : ''}`;
+          item.innerHTML = `
+            <div class="eval-item-header">
+              <span class="eval-item-title">${ev.title}</span>
+              <span class="eval-item-date">${ev.date} | المقيّم: ${ev.evaluator}</span>
+            </div>
+            <div class="eval-scores-chips">
+              <span class="score-chip">الدرجة الموزونة: <strong>${ev.totalScore}/100</strong></span>
+              <span class="score-chip">المهارة العملية: <strong>${ev.practicalScore}%</strong></span>
+              <span class="score-chip">السلامة المهنية (PPE): <strong>${ev.safetyScore}%</strong></span>
+              <span class="score-chip">صيانة المعدات: <strong>${ev.maintenanceScore}%</strong></span>
+            </div>
+            <div class="eval-notes-text">
+              <strong>${isSafety ? '⚠️ تنبيه سلامة:' : isExcellence ? '🌟 إشادة وتميز:' : '📝 ملاحظة المهندس:'}</strong>
+              ${ev.notes}
+            </div>
+          `;
+          repEvalTimeline.appendChild(item);
+        });
+      }
+    }
+
+    if (traineeReportContainer) traineeReportContainer.classList.add('visible');
+    traineeReportContainer.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  if (btnPrintReport) {
+    btnPrintReport.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  // =========================================================================
+  // لوحة الإدارة المركزية والنسخ الاحتياطي الدائم
+  // =========================================================================
+  function renderAdminDashboard() {
+    renderAdminDepartmentsList();
+    renderAuditLogTable();
+  }
+
+  function renderAdminDepartmentsList() {
+    if (!adminDepartmentsList) return;
+    adminDepartmentsList.innerHTML = '';
+
+    const allDepts = window.DepartmentRegistry.getAllDepartments();
+
+    allDepts.forEach(dept => {
+      const tile = document.createElement('div');
+      tile.className = 'dept-admin-tile';
+      tile.innerHTML = `
+        <div>
+          <div class="dept-tile-top">
+            <span class="dept-tile-name">${getIconEmoji(dept.icon)} ${dept.name}</span>
+            <span class="dept-meta-pill code-pill">${dept.code}</span>
+          </div>
+          <div style="font-size: 0.82rem; color: var(--slate-300); margin-bottom: 6px;">
+            <strong>المهندس المشرف:</strong> ${dept.engineer.name}
+          </div>
+          <div style="font-size: 0.82rem; color: var(--slate-300); margin-bottom: 6px;">
+            <strong>الـ IP المصرح:</strong> <span class="dept-tile-ip">${dept.authorizedIp}</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--slate-400);">
+            عدد المتدربين: <strong>${dept.getTrainees().length}</strong> متدرب
+          </div>
+        </div>
+        <div style="margin-top: 14px; display: flex; gap: 8px;">
+          <button type="button" class="btn-primary btn-open-dept" data-dept-id="${dept.id}" style="padding: 6px 12px; font-size: 0.8rem;">
+            دخول لوحة القسم
+          </button>
+        </div>
+      `;
+
+      tile.querySelector('.btn-open-dept').addEventListener('click', () => {
+        currentActiveDepartment = dept;
+        renderDepartmentDashboard(dept);
+        switchView('dashboard');
+        showToast(`تم فتح لوحة تحكم: ${dept.name}`, 'info');
+      });
+
+      adminDepartmentsList.appendChild(tile);
+    });
+  }
+
+  function renderAuditLogTable() {
+    if (!auditLogTableBody) return;
+    auditLogTableBody.innerHTML = '';
+
+    const logs = window.AuditLog ? window.AuditLog.getLogs() : [];
+
+    if (logs.length === 0) {
+      auditLogTableBody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--slate-400); padding: 18px;">
+            لا توجد سجلات دخول مسجلة حالياً.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    logs.forEach(log => {
+      const tr = document.createElement('tr');
+      const isSuccess = log.event === 'LOGIN_SUCCESS' || log.event === 'ADMIN_LOGIN';
+      const isBlocked = log.event === 'SECURITY_BLOCKED';
+
+      tr.innerHTML = `
+        <td style="font-family: 'Consolas', monospace; font-size: 0.82rem; direction: ltr; text-align: right;">${log.timestamp}</td>
+        <td><strong>${log.userName}</strong></td>
+        <td>${log.departmentName}</td>
+        <td style="font-family: 'Consolas', monospace; direction: ltr; text-align: right;">${log.authorizedIp}</td>
+        <td style="font-family: 'Consolas', monospace; direction: ltr; text-align: right; font-weight: 700; color: ${isBlocked ? '#f87171' : '#34d399'};">
+          ${log.clientIp}
+        </td>
+        <td>
+          <span class="dept-meta-pill ${isSuccess ? 'verified-ip' : ''}" style="color: ${isBlocked ? '#f87171' : ''}; border-color: ${isBlocked ? 'rgba(239, 68, 68, 0.4)' : ''};">
+            ${isSuccess ? '✓ مصرح ومطابق' : isBlocked ? '🚫 محظور أمنياً (IP غير مطابق)' : 'بيانات غير صحيحة'}
+          </span>
+        </td>
+      `;
+
+      auditLogTableBody.appendChild(tr);
+    });
+  }
+
+  if (btnClearAuditLog) {
+    btnClearAuditLog.addEventListener('click', () => {
+      if (window.AuditLog) window.AuditLog.clearLogs();
+      renderAuditLogTable();
+      showToast('تم تفريغ سجل الأمان.', 'info');
+    });
+  }
+
+  if (btnExportPermanentBackup) {
+    btnExportPermanentBackup.addEventListener('click', () => {
+      if (window.StorageManager) window.StorageManager.exportBackup();
+    });
+  }
+
+  if (btnResetAllDefaults) {
+    btnResetAllDefaults.addEventListener('click', () => {
+      if (confirm('هل أنت متأكد من رغبتك في استعادة ضبط المصنع لكافة البيانات وسجلات الحضور؟')) {
+        if (window.StorageManager) window.StorageManager.resetToFactoryDefaults();
+      }
+    });
+  }
+
+  // إضافة قسم تدريبي جديد ديناميكياً مع حفظ كلمة المرور في ملف password
+  if (btnOpenAddDepartmentModal) {
+    btnOpenAddDepartmentModal.addEventListener('click', () => {
+      if (modalAddDepartment) modalAddDepartment.classList.add('active');
+    });
+  }
+
+  if (formAddDepartment) {
+    formAddDepartment.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('newDeptName').value.trim();
+      const code = document.getElementById('newDeptCode').value.trim();
+      const authorizedIp = document.getElementById('newDeptAuthorizedIp').value.trim();
+      const engineerName = document.getElementById('newDeptEngName').value.trim();
+      const engineerEmail = document.getElementById('newDeptEngEmail').value.trim();
+      const engineerPassword = document.getElementById('newDeptEngPass').value.trim();
+      const capacity = Number(document.getElementById('newDeptCapacity').value);
+      const description = document.getElementById('newDeptDesc').value.trim();
+
+      const newDept = window.DynamicDepartmentFactory.create({
+        name,
+        code,
+        authorizedIp,
+        engineerName,
+        engineerEmail,
+        engineerPassword,
+        capacity,
+        description
+      });
+
+      // حفظ كلمة مرور المهندس في ملف password
+      if (window.PasswordManager) {
+        window.PasswordManager.setPassword('engineers', engineerEmail, engineerPassword, {
+          name: engineerName,
+          department: newDept.id,
+          authorizedIp: authorizedIp
+        });
+      }
+
+      if (window.StorageManager) {
+        window.StorageManager.saveDepartment(newDept);
+      }
+
+      formAddDepartment.reset();
+      if (modalAddDepartment) modalAddDepartment.classList.remove('active');
+
+      renderAdminDepartmentsList();
+      showToast(`تم إنشاء وتفعيل قسم (${newDept.name}) وحفظ بياناته وكلمة المرور بشكل دائم.`, 'success');
+    });
+  }
+
+  // =========================================================================
+  // الإطلاق الأولي للتطبيق وفحص الجلسة النشطة
+  // =========================================================================
+  initIpSimulator();
+  updateSessionUI();
+
+  const existingSession = window.AuthManager ? window.AuthManager.getSession() : null;
+  if (existingSession) {
+    if (existingSession.role === 'admin') {
+      switchView('admin');
+    } else if (existingSession.role === 'trainee') {
+      const searchRes = window.DepartmentRegistry.findTraineeGlobally(existingSession.trainee.code);
+      if (searchRes) {
+        displayTraineeReport(searchRes);
+        if (portalUserLoginHero) portalUserLoginHero.style.display = 'none';
+        if (portalActiveUserBar) portalActiveUserBar.style.display = 'flex';
+        if (portalActiveUserName) portalActiveUserName.textContent = searchRes.trainee.name;
+        if (portalActiveUserCode) portalActiveUserCode.textContent = searchRes.trainee.code;
+      }
+      switchView('portal');
+    } else {
+      currentActiveDepartment = window.DepartmentRegistry.getDepartment(existingSession.departmentId);
+      if (currentActiveDepartment) {
+        renderDepartmentDashboard(currentActiveDepartment);
+        switchView('dashboard');
+      } else {
+        switchView('login');
+      }
+    }
+  } else {
+    switchView('login');
+  }
+});
