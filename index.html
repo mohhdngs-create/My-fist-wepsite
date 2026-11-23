@@ -1,969 +1,1224 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام إدارة مركز التدريب المهني | VTC Industrial Portal</title>
-  
-  <!-- خط Cairo من Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <!-- ملفات التنسيق الصناعية الحديثة -->
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/responsive.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مدارس الكمال ترند لينك الصناعية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    /* ============================================================
+       ROOT VARIABLES & RESET
+    ============================================================ */
+    :root {
+      --navy:        #0a1628;
+      --navy-mid:    #122040;
+      --navy-light:  #1a3a6e;
+      --blue:        #1e56a0;
+      --blue-light:  #2d7dd2;
+      --emerald:     #0d9e6e;
+      --emerald-light:#14c48a;
+      --gold:        #f0a500;
+      --gold-light:  #ffc340;
+      --red:         #e53e3e;
+      --red-light:   #fc8181;
+      --slate:       #f1f5f9;
+      --slate-mid:   #e2e8f0;
+      --white:       #ffffff;
+      --text-dark:   #0f172a;
+      --text-mid:    #334155;
+      --text-light:  #64748b;
+      --shadow-sm:   0 2px 8px rgba(10,22,40,0.08);
+      --shadow-md:   0 4px 24px rgba(10,22,40,0.14);
+      --shadow-lg:   0 8px 48px rgba(10,22,40,0.22);
+      --radius-sm:   8px;
+      --radius-md:   16px;
+      --radius-lg:   24px;
+      --radius-xl:   32px;
+      --transition:  all 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Cairo', 'Tajawal', sans-serif;
+      background: var(--slate);
+      color: var(--text-dark);
+      min-height: 100vh;
+      direction: rtl;
+      overflow-x: hidden;
+    }
+    .hidden { display: none !important; }
+    .fade-in  { animation: fadeIn 0.5s ease forwards; }
+    .slide-up { animation: slideUp 0.5s ease forwards; }
+    .slide-in-right { animation: slideInRight 0.4s ease forwards; }
+    .pulse { animation: pulse 2s infinite; }
+    .float { animation: float 3s ease-in-out infinite; }
+
+    @keyframes fadeIn      { from{opacity:0} to{opacity:1} }
+    @keyframes slideUp     { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slideInRight{ from{opacity:0;transform:translateX(-30px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes float       { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    @keyframes spin        { to{transform:rotate(360deg)} }
+    @keyframes bounceIn    { 0%{transform:scale(0.3);opacity:0} 50%{transform:scale(1.05);opacity:0.8} 70%{transform:scale(0.9)} 100%{transform:scale(1);opacity:1} }
+    @keyframes gradientShift{ 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    @keyframes scrollTicker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+    /* ============================================================ PARTICLES */
+    #particles-canvas { position:fixed;inset:0;z-index:0;pointer-events:none; }
+
+    /* ============================================================ PAGE MANAGEMENT */
+    .page { display:none; min-height:100vh; }
+    .page.active { display:block; }
+    .dashboard { min-height:100vh; background:var(--slate); display:none; flex-direction:column; }
+    .dashboard.active { display:flex; }
+
+    /* ============================================================ LANDING */
+    #page-landing {
+      background: linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 40%,var(--navy-light) 100%);
+      background-size:300% 300%;
+      animation: gradientShift 8s ease infinite;
+      position:relative; display:flex; flex-direction:column; align-items:center; overflow:hidden;
+    }
+    .orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.15; pointer-events:none; z-index:1; }
+    .orb-1 { width:400px;height:400px;background:var(--blue-light);top:-100px;right:-100px;animation:float 6s ease-in-out infinite; }
+    .orb-2 { width:300px;height:300px;background:var(--emerald);bottom:100px;left:-80px;animation:float 8s ease-in-out infinite reverse; }
+    .orb-3 { width:200px;height:200px;background:var(--gold);top:50%;left:50%;animation:float 5s ease-in-out infinite 1s; }
+
+    .landing-header { text-align:center; padding:48px 20px 32px; position:relative; z-index:2; }
+    .logo-container { display:inline-block; position:relative; animation:float 4s ease-in-out infinite; }
+    .logo-glow { position:absolute;inset:-20px;border-radius:50%;background:radial-gradient(circle,rgba(30,86,160,0.4) 0%,transparent 70%);animation:pulse 2s infinite; }
+    .logo-img { width:140px;height:140px;object-fit:contain;border-radius:50%;border:4px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);backdrop-filter:blur(10px);box-shadow:0 0 40px rgba(30,86,160,0.5),0 20px 60px rgba(0,0,0,0.3);position:relative;z-index:1; }
+    .school-name { margin-top:20px;font-size:clamp(1.4rem,3vw,2rem);font-weight:800;color:var(--white);text-shadow:0 2px 20px rgba(0,0,0,0.3); }
+    .school-subtitle { margin-top:8px;font-size:clamp(0.85rem,1.8vw,1rem);color:rgba(255,255,255,0.65); }
+    .landing-divider { width:80px;height:3px;background:linear-gradient(90deg,var(--emerald),var(--blue-light));border-radius:2px;margin:16px auto 0; }
+
+    /* Ticker */
+    .stats-ticker { width:100%;background:rgba(255,255,255,0.05);border-top:1px solid rgba(255,255,255,0.08);border-bottom:1px solid rgba(255,255,255,0.08);padding:12px 0;overflow:hidden;position:relative;z-index:2;margin-bottom:40px; }
+    .ticker-track { display:flex;gap:60px;animation:scrollTicker 20s linear infinite;white-space:nowrap; }
+    .ticker-item { display:flex;align-items:center;gap:10px;color:rgba(255,255,255,0.7);font-size:0.85rem;flex-shrink:0; }
+    .ticker-item i { color:var(--gold); }
+
+    /* Portal Cards */
+    .portals-section { width:100%;max-width:1100px;padding:0 20px 60px;display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:24px;position:relative;z-index:2; }
+    .portal-card { background:rgba(255,255,255,0.07);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:var(--radius-xl);padding:36px 28px 32px;cursor:pointer;transition:var(--transition);position:relative;overflow:hidden;text-align:center;animation:slideUp 0.6s ease both; }
+    .portal-card:nth-child(1){animation-delay:0.1s} .portal-card:nth-child(2){animation-delay:0.25s} .portal-card:nth-child(3){animation-delay:0.4s}
+    .portal-card::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--card-color-a,var(--blue)) 0%,var(--card-color-b,var(--navy-light)) 100%);opacity:0;transition:opacity 0.4s ease;border-radius:var(--radius-xl); }
+    .portal-card:hover::before { opacity:0.15; }
+    .portal-card:hover { transform:translateY(-8px) scale(1.02);border-color:rgba(255,255,255,0.3);box-shadow:0 20px 60px rgba(0,0,0,0.3),0 0 0 1px rgba(255,255,255,0.15); }
+    .portal-card-parent  { --card-color-a:#0d9e6e; --card-color-b:#0a7a56; }
+    .portal-card-trainer { --card-color-a:#1e56a0; --card-color-b:#0a3570; }
+    .portal-card-admin   { --card-color-a:#c0392b; --card-color-b:#7b241c; }
+    .portal-icon-wrap { width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:2rem;position:relative;z-index:1;transition:var(--transition); }
+    .portal-card-parent  .portal-icon-wrap { background:linear-gradient(135deg,var(--emerald),var(--emerald-light));box-shadow:0 8px 24px rgba(13,158,110,0.4); }
+    .portal-card-trainer .portal-icon-wrap { background:linear-gradient(135deg,var(--blue),var(--blue-light));box-shadow:0 8px 24px rgba(30,86,160,0.4); }
+    .portal-card-admin   .portal-icon-wrap { background:linear-gradient(135deg,#c0392b,#e74c3c);box-shadow:0 8px 24px rgba(192,57,43,0.4); }
+    .portal-card:hover .portal-icon-wrap { transform:scale(1.1) rotate(-5deg); }
+    .portal-title { font-size:1.3rem;font-weight:700;color:var(--white);margin-bottom:8px;position:relative;z-index:1; }
+    .portal-desc  { font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.6;position:relative;z-index:1;margin-bottom:24px; }
+    .portal-btn { display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:50px;border:1.5px solid rgba(255,255,255,0.3);color:var(--white);font-family:'Cairo',sans-serif;font-size:0.9rem;font-weight:600;background:rgba(255,255,255,0.1);cursor:pointer;transition:var(--transition);position:relative;z-index:1; }
+    .portal-btn:hover { background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.5); }
+
+    /* ============================================================ MODALS */
+    .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px; }
+    .modal-overlay.open { display:flex;animation:fadeIn 0.3s ease; }
+    .modal-box { background:var(--white);border-radius:var(--radius-xl);padding:40px 36px 36px;width:100%;max-width:440px;position:relative;animation:bounceIn 0.4s ease;box-shadow:var(--shadow-lg); }
+    .modal-close { position:absolute;top:16px;left:16px;width:36px;height:36px;border:none;background:var(--slate);border-radius:50%;cursor:pointer;font-size:1rem;color:var(--text-mid);display:flex;align-items:center;justify-content:center;transition:var(--transition); }
+    .modal-close:hover { background:var(--red);color:var(--white); }
+    .modal-header { text-align:center;margin-bottom:28px; }
+    .modal-icon { width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 14px; }
+    .modal-title { font-size:1.3rem;font-weight:800;color:var(--text-dark); }
+    .modal-subtitle { font-size:0.85rem;color:var(--text-light);margin-top:4px; }
+
+    /* Forms */
+    .form-group { margin-bottom:18px; }
+    .form-label { display:block;font-size:0.85rem;font-weight:600;color:var(--text-mid);margin-bottom:6px; }
+    .form-input { width:100%;padding:12px 16px;border:2px solid var(--slate-mid);border-radius:var(--radius-sm);font-family:'Cairo',sans-serif;font-size:0.95rem;color:var(--text-dark);background:var(--slate);transition:var(--transition);outline:none;direction:rtl; }
+    .form-input:focus { border-color:var(--blue);background:var(--white);box-shadow:0 0 0 4px rgba(30,86,160,0.1); }
+    .form-input.error { border-color:var(--red);box-shadow:0 0 0 4px rgba(229,62,62,0.1); }
+    .input-hint { font-size:0.75rem;color:var(--text-light);margin-top:4px; }
+    .btn-login { width:100%;padding:14px;border:none;border-radius:var(--radius-sm);font-family:'Cairo',sans-serif;font-size:1rem;font-weight:700;color:var(--white);cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:10px;position:relative;overflow:hidden; }
+    .btn-login:active { transform:scale(0.98); }
+    .btn-parent  { background:linear-gradient(135deg,var(--emerald),var(--emerald-light));box-shadow:0 4px 16px rgba(13,158,110,0.3); }
+    .btn-trainer { background:linear-gradient(135deg,var(--blue),var(--blue-light));box-shadow:0 4px 16px rgba(30,86,160,0.3); }
+    .btn-admin   { background:linear-gradient(135deg,#c0392b,#e74c3c);box-shadow:0 4px 16px rgba(192,57,43,0.3); }
+    .error-msg { color:var(--red);font-size:0.82rem;text-align:center;margin-top:10px;display:none; }
+    .demo-creds { margin-top:16px;padding:12px 14px;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:var(--radius-sm);font-size:0.78rem;color:#0369a1;line-height:1.8; }
+
+    /* ============================================================ DASHBOARD SHARED */
+    .dash-nav { background:var(--white);border-bottom:1px solid var(--slate-mid);padding:0 24px;height:68px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm); }
+    .dash-nav-brand { display:flex;align-items:center;gap:12px; }
+    .dash-nav-logo { width:42px;height:42px;object-fit:contain;border-radius:50%; }
+    .dash-nav-title { font-size:1rem;font-weight:700;color:var(--text-dark); }
+    .dash-nav-subtitle { font-size:0.72rem;color:var(--text-light); }
+    .dash-nav-actions { display:flex;align-items:center;gap:12px;flex-wrap:wrap; }
+    .nav-badge { display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:50px;font-size:0.8rem;font-weight:600; }
+    .nav-badge-parent  { background:rgba(13,158,110,0.1); color:var(--emerald); }
+    .nav-badge-trainer { background:rgba(30,86,160,0.1);  color:var(--blue); }
+    .nav-badge-admin   { background:rgba(192,57,43,0.1);  color:#c0392b; }
+    .btn-logout { display:flex;align-items:center;gap:6px;padding:7px 16px;border:1.5px solid var(--slate-mid);border-radius:50px;background:none;font-family:'Cairo',sans-serif;font-size:0.82rem;font-weight:600;color:var(--text-mid);cursor:pointer;transition:var(--transition); }
+    .btn-logout:hover { background:var(--red);color:var(--white);border-color:var(--red); }
+    .dash-content { flex:1;padding:28px 24px;max-width:1200px;width:100%;margin:0 auto; }
+    .dash-welcome { margin-bottom:28px; }
+    .dash-welcome h1 { font-size:clamp(1.3rem,2.5vw,1.8rem);font-weight:800;color:var(--text-dark); }
+    .dash-welcome p { font-size:0.9rem;color:var(--text-light);margin-top:4px; }
+    .datetime-chip { display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--slate);border:1px solid var(--slate-mid);border-radius:50px;font-size:0.78rem;color:var(--text-mid);font-weight:600; }
+
+    /* Stat Cards */
+    .stat-cards { display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px; }
+    .stat-card { background:var(--white);border-radius:var(--radius-md);padding:20px;box-shadow:var(--shadow-sm);border:1px solid var(--slate-mid);display:flex;align-items:center;gap:16px;transition:var(--transition);animation:slideUp 0.4s ease both; }
+    .stat-card:hover { transform:translateY(-3px);box-shadow:var(--shadow-md); }
+    .stat-icon { width:52px;height:52px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0; }
+    .stat-value { font-size:1.5rem;font-weight:800;color:var(--text-dark);line-height:1; }
+    .stat-label { font-size:0.78rem;color:var(--text-light);margin-top:3px; }
+
+    /* Section Cards */
+    .section-card { background:var(--white);border-radius:var(--radius-md);border:1px solid var(--slate-mid);box-shadow:var(--shadow-sm);margin-bottom:24px;overflow:hidden; }
+    .section-header { padding:18px 24px;border-bottom:1px solid var(--slate-mid);display:flex;align-items:center;justify-content:space-between; }
+    .section-title { display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:700;color:var(--text-dark); }
+    .s-icon { width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.95rem; }
+    .section-body { padding:20px 24px; }
+
+    /* Badges */
+    .badge { display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:50px;font-size:0.75rem;font-weight:700; }
+    .badge-present { background:rgba(13,158,110,0.1);color:var(--emerald); }
+    .badge-absent  { background:rgba(229,62,62,0.1); color:var(--red); }
+    .badge-late    { background:rgba(240,165,0,0.1); color:var(--gold); }
+    .badge-paid    { background:rgba(13,158,110,0.1);color:var(--emerald); }
+    .badge-unpaid  { background:rgba(229,62,62,0.1); color:var(--red); }
+
+    /* Alert Banners */
+    .alert-banner { border-radius:var(--radius-sm);padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:16px;font-size:0.88rem;font-weight:600; }
+    .alert-success { background:rgba(13,158,110,0.1);border:1px solid rgba(13,158,110,0.3);color:var(--emerald); }
+    .alert-danger  { background:rgba(229,62,62,0.1); border:1px solid rgba(229,62,62,0.3); color:var(--red);animation:pulse 2s infinite; }
+    .alert-warning { background:rgba(240,165,0,0.1); border:1px solid rgba(240,165,0,0.3); color:#d97706; }
+
+    /* Table */
+    .table-scroll { overflow-x:auto; }
+    .data-table { width:100%;border-collapse:collapse;font-size:0.88rem; }
+    .data-table th { background:var(--slate);padding:10px 14px;text-align:right;font-weight:700;color:var(--text-mid);font-size:0.8rem;border-bottom:2px solid var(--slate-mid); }
+    .data-table td { padding:12px 14px;border-bottom:1px solid var(--slate-mid);color:var(--text-dark);vertical-align:middle; }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table tr:hover td { background:var(--slate); }
+
+    /* Buttons */
+    .btn-sm { display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:none;border-radius:6px;font-family:'Cairo',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;transition:var(--transition); }
+    .btn-sm:active { transform:scale(0.95); }
+    .btn-sm:hover { filter:brightness(1.1);transform:translateY(-1px); }
+    .btn-present { background:rgba(13,158,110,0.1);color:var(--emerald);border:1px solid rgba(13,158,110,0.3); }
+    .btn-absent  { background:rgba(229,62,62,0.1); color:var(--red);    border:1px solid rgba(229,62,62,0.3); }
+    .btn-late    { background:rgba(240,165,0,0.1); color:#d97706;       border:1px solid rgba(240,165,0,0.3); }
+    .btn-primary { background:var(--blue);color:var(--white); }
+    .btn-danger  { background:var(--red); color:var(--white); }
+    .btn-success { background:var(--emerald);color:var(--white); }
+    .btn-present.active { background:var(--emerald);color:var(--white); }
+    .btn-absent.active  { background:var(--red);    color:var(--white); }
+    .btn-late.active    { background:var(--gold);   color:var(--white); }
+
+    /* Note input */
+    .note-input { width:100%;min-width:160px;padding:7px 10px;border:1.5px solid var(--slate-mid);border-radius:6px;font-family:'Cairo',sans-serif;font-size:0.78rem;color:var(--text-dark);background:var(--slate);outline:none;transition:var(--transition);resize:none; }
+    .note-input:focus { border-color:var(--blue);background:var(--white); }
+
+    /* Filter Bar */
+    .filter-bar { display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:16px 24px;background:var(--slate);border-bottom:1px solid var(--slate-mid); }
+    .filter-select { padding:9px 14px;border:1.5px solid var(--slate-mid);border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.85rem;color:var(--text-dark);background:var(--white);outline:none;cursor:pointer;transition:var(--transition);direction:rtl; }
+    .filter-select:focus { border-color:var(--blue); }
+    .filter-btn { padding:9px 20px;border:none;border-radius:8px;background:var(--blue);color:var(--white);font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;transition:var(--transition); }
+    .filter-btn:hover { background:var(--blue-light); }
+
+    /* Attendance card (parent) */
+    .attendance-status-card { border-radius:var(--radius-md);padding:24px;display:flex;align-items:center;gap:20px;margin-bottom:20px; }
+    .attendance-status-card.present { background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #6ee7b7; }
+    .attendance-status-card.absent  { background:linear-gradient(135deg,#fee2e2,#fecaca);border:1px solid #fca5a5; }
+    .attendance-status-card.late    { background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d; }
+    .att-status-icon { font-size:2.5rem;flex-shrink:0; }
+    .att-status-info h3 { font-size:1.1rem;font-weight:800;color:var(--text-dark); }
+    .att-status-info p  { font-size:0.82rem;color:var(--text-mid);margin-top:4px; }
+
+    /* Note Cards */
+    .note-card { background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;animation:slideUp 0.3s ease; }
+    .note-card-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:6px; }
+    .note-trainer { font-size:0.78rem;font-weight:700;color:var(--blue); }
+    .note-date    { font-size:0.72rem;color:var(--text-light); }
+    .note-text    { font-size:0.85rem;color:var(--text-mid);line-height:1.6; }
+
+    /* Dept grid */
+    .dept-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:20px 24px; }
+    .dept-overview-card { background:var(--white);border:1px solid var(--slate-mid);border-radius:var(--radius-sm);padding:16px;transition:var(--transition);cursor:pointer; }
+    .dept-overview-card:hover { border-color:var(--blue);box-shadow:0 4px 16px rgba(30,86,160,0.1);transform:translateY(-2px); }
+    .dept-overview-name { font-size:0.9rem;font-weight:700;color:var(--text-dark);margin-bottom:10px;display:flex;align-items:center;gap:8px; }
+    .dept-stat-pill { flex:1;text-align:center;padding:6px 4px;border-radius:6px;font-size:0.75rem;font-weight:700; }
+    .dept-stat-pill.p { background:rgba(13,158,110,0.1);color:var(--emerald); }
+    .dept-stat-pill.a { background:rgba(229,62,62,0.1); color:var(--red); }
+    .dept-stat-pill.l { background:rgba(240,165,0,0.1); color:#d97706; }
+
+    /* Progress bar */
+    .progress-bar-wrap { background:var(--slate-mid);border-radius:50px;height:8px;overflow:hidden;flex:1; }
+    .progress-bar-fill { height:100%;border-radius:50px;background:linear-gradient(90deg,var(--blue),var(--emerald));transition:width 1s ease; }
+
+    /* Tabs */
+    .dash-tabs { display:flex;gap:4px;padding:16px 24px 0;border-bottom:1px solid var(--slate-mid);overflow-x:auto; }
+    .dash-tab { padding:10px 20px;border:none;background:none;font-family:'Cairo',sans-serif;font-size:0.88rem;font-weight:600;color:var(--text-light);cursor:pointer;border-bottom:3px solid transparent;transition:var(--transition);white-space:nowrap;flex-shrink:0; }
+    .dash-tab:hover { color:var(--blue); }
+    .dash-tab.active { color:var(--blue);border-bottom-color:var(--blue); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block;animation:fadeIn 0.3s ease; }
+
+    /* Inner modal */
+    .inner-modal { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px; }
+    .inner-modal.open { display:flex;animation:fadeIn 0.2s ease; }
+    .inner-modal-box { background:var(--white);border-radius:var(--radius-md);padding:32px 28px;width:100%;max-width:400px;animation:bounceIn 0.3s ease; }
+
+    /* Toast */
+    .toast-container { position:fixed;bottom:24px;left:24px;z-index:9999;display:flex;flex-direction:column;gap:10px; }
+    .toast { display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:var(--radius-sm);background:var(--white);box-shadow:var(--shadow-md);border-right:4px solid var(--blue);font-size:0.85rem;font-weight:600;max-width:320px;animation:slideInRight 0.3s ease;color:var(--text-dark); }
+    .toast.success { border-right-color:var(--emerald); }
+    .toast.danger  { border-right-color:var(--red); }
+    .toast.warning { border-right-color:var(--gold); }
+    .toast i { font-size:1.1rem; }
+    .toast.success i { color:var(--emerald); }
+    .toast.danger  i { color:var(--red); }
+    .toast.warning i { color:var(--gold); }
+
+    /* Bar chart */
+    .bar-chart { display:flex;align-items:flex-end;gap:12px;height:120px;padding:0 4px; }
+    .bar-col { display:flex;flex-direction:column;align-items:center;gap:4px;flex:1; }
+    .bar-fill { width:100%;border-radius:4px 4px 0 0;transition:height 1s ease; }
+    .bar-label { font-size:0.65rem;color:var(--text-light);text-align:center; }
+    .bar-val   { font-size:0.7rem;font-weight:700;color:var(--text-mid); }
+
+    /* Special */
+    .highlight-petroleum   { background:linear-gradient(135deg,#f3e8ff,#ede9fe);border-color:#c4b5fd !important; }
+    .highlight-programming { background:linear-gradient(135deg,#d1fae5,#a7f3d0);border-color:#6ee7b7 !important; }
+    .dept-badge-petroleum  { background:#7c3aed;color:var(--white);padding:2px 8px;border-radius:4px;font-size:0.68rem;white-space:nowrap; }
+    .dept-badge-programming{ background:var(--emerald);color:var(--white);padding:2px 8px;border-radius:4px;font-size:0.68rem;white-space:nowrap; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:6px;height:6px; }
+    ::-webkit-scrollbar-track { background:var(--slate); }
+    ::-webkit-scrollbar-thumb { background:var(--slate-mid);border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--text-light); }
+
+    /* ============================================================ RESPONSIVE */
+    @media(max-width:768px){
+      .dash-nav { padding:0 16px; }
+      .dash-content { padding:20px 16px; }
+      .portals-section { grid-template-columns:1fr; }
+      .modal-box { padding:28px 20px; }
+      .section-body { padding:16px; }
+      .dept-grid { grid-template-columns:1fr 1fr; }
+      .bar-chart { height:80px; }
+      .dash-tabs { padding:12px 16px 0; }
+      .dash-tab { padding:8px 14px;font-size:0.8rem; }
+      .data-table th,.data-table td { padding:8px 10px;font-size:0.8rem; }
+      .dash-nav-actions .datetime-chip { display:none; }
+    }
+    @media(max-width:480px){
+      .dept-grid { grid-template-columns:1fr; }
+      .stat-cards { grid-template-columns:1fr 1fr; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- =========================================================================
-       شريط محاكاة عنوان الـ IP (Simulate Lab IP Toolbar)
-       ========================================================================= -->
-  <aside class="ip-simulator-bar" id="ipSimulatorBar" aria-label="محاكاة عنوان IP للورش والمعامل">
-    <div class="ip-sim-brand">
-      <span class="hazard-icon">⚡</span>
-      <span>محاكي شبكة الورش والمعامل (Network IP Simulator):</span>
+<!-- PARTICLES -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- ================================================================ LANDING ================================================================ -->
+<div id="page-landing" class="page active">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="landing-header">
+    <div class="logo-container">
+      <div class="logo-glow"></div>
+      <img src="logo.jpg" alt="K-Link School Logo" class="logo-img" onerror="this.style.display='none'" />
+    </div>
+    <div class="school-name">مدارس الكمال ترند لينك الصناعية</div>
+    <div class="school-subtitle">منظومة الإدارة المدرسية المتكاملة &middot; K-Link School Management System</div>
+    <div class="landing-divider"></div>
+  </div>
+
+  <div class="stats-ticker">
+    <div class="ticker-track">
+      <div class="ticker-item"><i class="fa fa-users"></i><span>إجمالي الطلاب: <strong>842</strong></span></div>
+      <div class="ticker-item"><i class="fa fa-layer-group"></i><span>الأقسام: <strong>20 قسم</strong></span></div>
+      <div class="ticker-item"><i class="fa fa-chalkboard-teacher"></i><span>المدربون: <strong>45 مدرب</strong></span></div>
+      <div class="ticker-item"><i class="fa fa-calendar-check"></i><span>حضور اليوم: <strong>94.2%</strong></span></div>
+      <div class="ticker-item"><i class="fa fa-oil-well"></i><span>قسم البترول والغاز الطبيعي</span></div>
+      <div class="ticker-item"><i class="fa fa-code"></i><span>قسم تقنية البرمجة والمعلومات</span></div>
+      <div class="ticker-item"><i class="fa fa-star"></i><span>العام الدراسي 2025 / 2026</span></div>
+      <div class="ticker-item"><i class="fa fa-users"></i><span>إجمالي الطلاب: <strong>842</strong></span></div>
+      <div class="ticker-item"><i class="fa fa-layer-group"></i><span>الأقسام: <strong>20 قسم</strong></span></div>
+      <div class="ticker-item"><i class="fa fa-chalkboard-teacher"></i><span>المدربون: <strong>45 مدرب</strong></span></div>
+      <div class="ticker-item"><i class="fa fa-calendar-check"></i><span>حضور اليوم: <strong>94.2%</strong></span></div>
+      <div class="ticker-item"><i class="fa fa-oil-well"></i><span>قسم البترول والغاز الطبيعي</span></div>
+      <div class="ticker-item"><i class="fa fa-code"></i><span>قسم تقنية البرمجة والمعلومات</span></div>
+      <div class="ticker-item"><i class="fa fa-star"></i><span>العام الدراسي 2025 / 2026</span></div>
+    </div>
+  </div>
+
+  <div class="portals-section">
+    <div class="portal-card portal-card-parent" onclick="openModal('modal-parent')">
+      <div class="portal-icon-wrap"><i class="fa fa-user-friends"></i></div>
+      <div class="portal-title">بوابة ولي الأمر</div>
+      <div class="portal-desc">تابع حضور وغياب وتقارير ابنك أو ابنتك أولاً بأول مع تنبيهات المصروفات الفورية</div>
+      <button class="portal-btn"><i class="fa fa-sign-in-alt"></i> دخول ولي الأمر</button>
+    </div>
+    <div class="portal-card portal-card-trainer" onclick="openModal('modal-trainer')">
+      <div class="portal-icon-wrap"><i class="fa fa-chalkboard-teacher"></i></div>
+      <div class="portal-title">بوابة المدربين</div>
+      <div class="portal-desc">سجّل الحضور اليومي وأرسل ملاحظاتك للأولياء مباشرة عبر لوحة تحكم ذكية ومتطورة</div>
+      <button class="portal-btn"><i class="fa fa-sign-in-alt"></i> دخول المدربين</button>
+    </div>
+    <div class="portal-card portal-card-admin" onclick="openModal('modal-admin')">
+      <div class="portal-icon-wrap"><i class="fa fa-shield-alt"></i></div>
+      <div class="portal-title">بوابة الإدارة</div>
+      <div class="portal-desc">لوحة تحكم شاملة لإدارة الأقسام والمدربين والمصروفات ومتابعة الحضور عبر المجمع كله</div>
+      <button class="portal-btn"><i class="fa fa-sign-in-alt"></i> دخول الإدارة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ LOGIN MODALS ================================================================ -->
+<div id="modal-parent" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-parent')"><i class="fa fa-times"></i></button>
+    <div class="modal-header">
+      <div class="modal-icon" style="background:linear-gradient(135deg,var(--emerald),var(--emerald-light));color:white"><i class="fa fa-user-friends"></i></div>
+      <div class="modal-title">بوابة ولي الأمر</div>
+      <div class="modal-subtitle">أدخل الرقم القومي للطالب وكلمة المرور</div>
+    </div>
+    <form onsubmit="loginParent(event)">
+      <div class="form-group">
+        <label class="form-label"><i class="fa fa-id-card"></i> الرقم القومي للطالب (14 رقم)</label>
+        <input id="parent-nid" class="form-input" type="text" maxlength="14" placeholder="أدخل الرقم القومي للطالب" required />
+        <div class="input-hint">مثال: 30901150100123</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fa fa-lock"></i> كلمة المرور</label>
+        <input id="parent-pass" class="form-input" type="password" placeholder="أدخل كلمة المرور" required />
+      </div>
+      <button type="submit" class="btn-login btn-parent"><i class="fa fa-sign-in-alt"></i> تسجيل الدخول</button>
+      <div id="parent-error" class="error-msg"><i class="fa fa-exclamation-circle"></i> بيانات خاطئة، يرجى المحاولة مرة أخرى</div>
+    </form>
+    <div class="demo-creds"><strong>بيانات تجريبية:</strong><br/>الرقم القومي: <strong>30901150100123</strong><br/>كلمة المرور: <strong>parent123</strong></div>
+  </div>
+</div>
+
+<div id="modal-trainer" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-trainer')"><i class="fa fa-times"></i></button>
+    <div class="modal-header">
+      <div class="modal-icon" style="background:linear-gradient(135deg,var(--blue),var(--blue-light));color:white"><i class="fa fa-chalkboard-teacher"></i></div>
+      <div class="modal-title">بوابة المدربين</div>
+      <div class="modal-subtitle">أدخل كود المدرب وكلمة المرور</div>
+    </div>
+    <form onsubmit="loginTrainer(event)">
+      <div class="form-group">
+        <label class="form-label"><i class="fa fa-id-badge"></i> كود المدرب</label>
+        <input id="trainer-code" class="form-input" type="text" placeholder="مثال: TR-001" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fa fa-lock"></i> كلمة المرور</label>
+        <input id="trainer-pass" class="form-input" type="password" placeholder="أدخل كلمة المرور" required />
+      </div>
+      <button type="submit" class="btn-login btn-trainer"><i class="fa fa-sign-in-alt"></i> تسجيل الدخول</button>
+      <div id="trainer-error" class="error-msg"><i class="fa fa-exclamation-circle"></i> بيانات خاطئة، يرجى المحاولة مرة أخرى</div>
+    </form>
+    <div class="demo-creds"><strong>بيانات تجريبية:</strong><br/>كود المدرب: <strong>TR-001</strong><br/>كلمة المرور: <strong>trainer123</strong></div>
+  </div>
+</div>
+
+<div id="modal-admin" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-admin')"><i class="fa fa-times"></i></button>
+    <div class="modal-header">
+      <div class="modal-icon" style="background:linear-gradient(135deg,#c0392b,#e74c3c);color:white"><i class="fa fa-shield-alt"></i></div>
+      <div class="modal-title">بوابة الإدارة</div>
+      <div class="modal-subtitle">دخول عالي الأمان &middot; High-Security Access</div>
+    </div>
+    <form onsubmit="loginAdmin(event)">
+      <div class="form-group">
+        <label class="form-label"><i class="fa fa-key"></i> كود الإدارة الخاص</label>
+        <input id="admin-code" class="form-input" type="text" placeholder="أدخل كود الإدارة" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fa fa-lock"></i> كلمة المرور</label>
+        <input id="admin-pass" class="form-input" type="password" placeholder="أدخل كلمة المرور" required />
+      </div>
+      <button type="submit" class="btn-login btn-admin"><i class="fa fa-shield-alt"></i> دخول الإدارة</button>
+      <div id="admin-error" class="error-msg"><i class="fa fa-exclamation-circle"></i> كود خاطئ، يرجى المحاولة مرة أخرى</div>
+    </form>
+    <div class="demo-creds"><strong>بيانات تجريبية:</strong><br/>كود الإدارة: <strong>ADMIN-2025</strong><br/>كلمة المرور: <strong>admin123</strong></div>
+  </div>
+</div>
+
+<!-- ================================================================ PARENT DASHBOARD ================================================================ -->
+<div id="dash-parent" class="dashboard">
+  <nav class="dash-nav">
+    <div class="dash-nav-brand">
+      <img src="logo.jpg" class="dash-nav-logo" alt="logo" onerror="this.style.display='none'" />
+      <div><div class="dash-nav-title">K-Link</div><div class="dash-nav-subtitle">بوابة ولي الأمر</div></div>
+    </div>
+    <div class="dash-nav-actions">
+      <div class="datetime-chip"><i class="fa fa-calendar"></i><span id="parent-date"></span></div>
+      <div class="nav-badge nav-badge-parent"><i class="fa fa-user-friends"></i> <span id="parent-student-name">أحمد محمد</span></div>
+      <button class="btn-logout" onclick="logout()"><i class="fa fa-sign-out-alt"></i> خروج</button>
+    </div>
+  </nav>
+  <div class="dash-content">
+    <div class="dash-welcome slide-up">
+      <h1>مرحباً، <span id="parent-welcome-name">أسرة أحمد</span> 👋</h1>
+      <p>آخر تحديث: اليوم · يمكنك متابعة جميع تفاصيل ابنك من هنا</p>
+    </div>
+    <div class="stat-cards">
+      <div class="stat-card" style="animation-delay:0.1s">
+        <div class="stat-icon" style="background:rgba(13,158,110,0.1);color:var(--emerald)"><i class="fa fa-calendar-check"></i></div>
+        <div><div class="stat-value">22</div><div class="stat-label">أيام الحضور هذا الشهر</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.2s">
+        <div class="stat-icon" style="background:rgba(229,62,62,0.1);color:var(--red)"><i class="fa fa-calendar-times"></i></div>
+        <div><div class="stat-value">2</div><div class="stat-label">أيام الغياب</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.3s">
+        <div class="stat-icon" style="background:rgba(240,165,0,0.1);color:var(--gold)"><i class="fa fa-clock"></i></div>
+        <div><div class="stat-value">1</div><div class="stat-label">مرات التأخر</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.4s">
+        <div class="stat-icon" style="background:rgba(30,86,160,0.1);color:var(--blue)"><i class="fa fa-layer-group"></i></div>
+        <div><div class="stat-value" style="font-size:1.1rem">برمجة</div><div class="stat-label">القسم الدراسي</div></div>
+      </div>
     </div>
 
-    <div class="ip-sim-controls">
-      <div class="ip-sim-input-group">
-        <label for="clientIpInput">IP الجهاز الحالي:</label>
-        <input type="text" id="clientIpInput" class="ip-sim-input" value="192.168.10.25" placeholder="0.0.0.0">
+    <!-- Today Attendance -->
+    <div class="section-card fade-in">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="s-icon" style="background:rgba(13,158,110,0.1);color:var(--emerald)"><i class="fa fa-calendar-day"></i></div>
+          حضور اليوم (يوم بيومه)
+        </div>
+        <span class="badge badge-present" id="today-status-badge"><i class="fa fa-check-circle"></i> حاضر</span>
       </div>
-
-      <!-- أزرار التبديل السريع لعناوين الـ IP المعتمدة وغير المعتمدة -->
-      <button type="button" class="btn-ip-quick active" data-ip="192.168.10.25" title="معمل البرمجة وتطوير الويب">
-        <span>💻 معمل البرمجة (192.168.10.25)</span>
-      </button>
-      <button type="button" class="btn-ip-quick" data-ip="192.168.20.40" title="ورشة الخراطة والتشغيل">
-        <span>⚙️ ورشة الخراطة (192.168.20.40)</span>
-      </button>
-      <button type="button" class="btn-ip-quick" data-ip="192.168.30.55" title="ورشة ماكينات CNC">
-        <span>🎛️ ورشة CNC (192.168.30.55)</span>
-      </button>
-      <button type="button" class="btn-ip-quick" data-ip="192.168.40.70" title="معمل الكهرباء و PLC">
-        <span>⚡ معمل PLC (192.168.40.70)</span>
-      </button>
-      <button type="button" class="btn-ip-quick danger" data-ip="10.0.99.12" title="شبكة منزلية أو خارجية غير مصرحة">
-        <span>🚫 IP خارجي مرفوض (10.0.99.12)</span>
-      </button>
+      <div class="section-body">
+        <div id="today-attendance-card" class="attendance-status-card present">
+          <div class="att-status-icon" id="att-icon">✅</div>
+          <div class="att-status-info">
+            <h3 id="attendance-status-text">الطالب حاضر اليوم</h3>
+            <p id="attendance-time-text">وقت الحضور: 8:05 صباحاً · المدرب: م. سارة علي</p>
+          </div>
+        </div>
+      </div>
     </div>
-  </aside>
 
-  <!-- =========================================================================
-       شريط التنقل العلوي (Main Navbar)
-       ========================================================================= -->
-  <header class="main-navbar">
-    <a href="#" class="navbar-brand" id="brandHomeLink">
-      <div class="brand-emblem">VTC</div>
-      <div class="brand-text">
-        <h1>مركز التدريب المهني والتقني</h1>
-        <p>منظومة إدارة الأقسام والورش الصناعية | جاهز للتشغيل الفعلي</p>
+    <!-- Finance -->
+    <div class="section-card fade-in">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="s-icon" style="background:rgba(240,165,0,0.1);color:var(--gold)"><i class="fa fa-money-bill-wave"></i></div>
+          تنبيهات المصروفات
+        </div>
       </div>
-    </a>
-
-    <div class="navbar-actions">
-      <!-- مؤشر الحفظ الدائم للبيانات -->
-      <span id="storageStatusBadge" class="dept-meta-pill verified-ip" style="font-size: 0.76rem; padding: 4px 10px;" title="البيانات وكلمات المرور تُحفظ بشكل دائم في ملفات الخادم والقرص">
-        <span>🟢 الحفظ الدائم مفعل (ملفات القرص)</span>
-      </span>
-
-      <!-- تبويبات التنقل السريع -->
-      <nav class="nav-tabs-group" aria-label="أقسام البوابة">
-        <button type="button" class="nav-tab-btn active" id="tabNavLogin" data-target="view-login">
-          <span>تسجيل الدخول</span>
-        </button>
-        <button type="button" class="nav-tab-btn" id="tabNavDashboard" data-target="view-department-dashboard" style="display: none;">
-          <span>لوحة تحكم القسم</span>
-        </button>
-        <button type="button" class="nav-tab-btn" id="tabNavPortal" data-target="view-trainee-parent-portal">
-          <span>بوابة المتدرب وولي الأمر</span>
-        </button>
-        <button type="button" class="nav-tab-btn" id="tabNavAdmin" data-target="view-admin-dashboard" style="display: none;">
-          <span>الإدارة المركزية</span>
-        </button>
-      </nav>
-
-      <!-- شارة المستخدم المسجل وزر الخروج -->
-      <div id="userSessionBadge" class="user-badge-pill" style="display: none;">
-        <span class="status-dot"></span>
-        <span id="sessionUserName">مستخدم مسجل</span>
-        <span id="sessionDeptBadge" class="dept-meta-pill code-pill" style="padding: 2px 6px; font-size: 0.72rem;">—</span>
+      <div class="section-body">
+        <div id="finance-alert" class="alert-banner alert-success">
+          <i class="fa fa-check-circle fa-lg"></i>
+          <div><strong>المصروفات مدفوعة ✓</strong><br/><span style="font-size:0.8rem;opacity:0.9">تم دفع مصروفات شهر نوفمبر 2025 بتاريخ 3/11/2025 · المبلغ: 1,200 جنيه</span></div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+          <div style="flex:1;min-width:140px;background:var(--slate);border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:1.2rem;font-weight:800;color:var(--emerald)">1,200 ج</div>
+            <div style="font-size:0.75rem;color:var(--text-light);margin-top:2px">المبلغ المدفوع</div>
+          </div>
+          <div style="flex:1;min-width:140px;background:var(--slate);border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:1.2rem;font-weight:800;color:var(--blue)">ديسمبر</div>
+            <div style="font-size:0.75rem;color:var(--text-light);margin-top:2px">الشهر القادم</div>
+          </div>
+          <div style="flex:1;min-width:140px;background:var(--slate);border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:1.2rem;font-weight:800;color:var(--text-mid)">1 / 12</div>
+            <div style="font-size:0.75rem;color:var(--text-light);margin-top:2px">تاريخ الاستحقاق</div>
+          </div>
+        </div>
       </div>
-
-      <button type="button" id="btnLogout" class="btn-logout" style="display: none;">
-        تسجيل الخروج
-      </button>
     </div>
-  </header>
 
-  <!-- =========================================================================
-       المحتوى الرئيسي والتنقل بين المشاهد (Views)
-       ========================================================================= -->
-  <main class="main-content">
-
-    <!-- -----------------------------------------------------------------------
-         مشهد 1: تسجيل الدخول الشامل (VIEW LOGIN)
-         ----------------------------------------------------------------------- -->
-    <section id="view-login" class="view-section active">
-      <div class="login-page-grid">
-        
-        <!-- بطاقة تسجيل الدخول وفحص الأمان -->
-        <div class="login-card">
-          
-          <!-- أزرار التبديل بين أنواع تسجيل الدخول -->
-          <div style="display: flex; gap: 6px; margin-bottom: 20px; background: rgba(0,0,0,0.4); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-            <button type="button" class="nav-tab-btn active" id="tabLoginTypeEngineer" style="flex: 1; text-align: center; justify-content: center; font-size: 0.82rem;">
-              <span>👨‍🏫 مهندسو الأقسام</span>
-            </button>
-            <button type="button" class="nav-tab-btn" id="tabLoginTypeUser" style="flex: 1; text-align: center; justify-content: center; font-size: 0.82rem;">
-              <span>👤 المتدربون / أولياء الأمور</span>
-            </button>
-            <button type="button" class="nav-tab-btn" id="tabLoginTypeAdmin" style="flex: 1; text-align: center; justify-content: center; font-size: 0.82rem;">
-              <span>🏛️ إدارة المركز</span>
-            </button>
-          </div>
-
-          <!-- نموذج 1: تسجيل دخول مهندسي الأقسام (IP مقيد + كلمة مرور) -->
-          <div id="engineerLoginSection">
-            <div class="login-header">
-              <span class="portal-badge">🔒 بوابة دخول مهندسي الورش والمعامل</span>
-              <h2>تسجيل دخول مهندس القسم</h2>
-              <p>تسجيل الدخول بكلمة المرور المخصصة مع التحقق الآلي من تطابق عنوان IP شبكة ورشة القسم.</p>
-            </div>
-
-            <!-- صندوق التنبيه الأمني في حال عدم تطابق عنوان الـ IP (حسب المتطلبات الصارمة) -->
-            <div id="securityAlertBox" class="security-alert-box" role="alert">
-              <div class="alert-hazard-header">
-                <span>⚠️</span>
-                <span>تنبيه أمني صارم - تقييد عنوان الشبكة (IP Restriction)</span>
-              </div>
-              <p class="alert-message-text" id="securityAlertMessage">
-                عذراً، غير مصرح لك بالدخول من هذا الجهاز أو الشبكة (عنوان IP غير مطابق للقسم)
-              </p>
-              <div class="ip-comparison-card">
-                <div class="ip-comparison-item">
-                  <span class="label">عنوان IP المكتشف حالياً:</span>
-                  <span class="ip-value wrong" id="detectedIpDisplay">10.0.99.12</span>
-                </div>
-                <div class="ip-comparison-item">
-                  <span class="label">الـ IP المعتمد لمعمل هذا القسم:</span>
-                  <span class="ip-value expected" id="expectedIpDisplay">192.168.10.25</span>
-                </div>
-              </div>
-            </div>
-
-            <form id="engineerLoginForm" autocomplete="off">
-              <div class="form-group">
-                <label for="loginEmail" class="form-label">البريد الإلكتروني للمهندس:</label>
-                <div class="input-with-icon">
-                  <input type="email" id="loginEmail" class="form-input" placeholder="eng.department@vtc.edu.sa" required value="eng.programming@vtc.edu.sa">
-                  <span class="input-icon">✉️</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="loginPassword" class="form-label">كلمة المرور (المحفوظة في ملف password):</label>
-                <div class="input-with-icon">
-                  <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required value="prog123">
-                  <span class="input-icon">🔑</span>
-                </div>
-              </div>
-
-              <div class="form-group" style="margin-top: 24px;">
-                <button type="submit" class="btn-primary" id="btnLoginSubmit">
-                  <span>التحقق والدخول للوحة الورشة</span>
-                  <span>←</span>
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- نموذج 2: تسجيل دخول المستخدمين / المتدربين بكلمة المرور -->
-          <div id="userLoginSection" style="display: none;">
-            <div class="login-header">
-              <span class="portal-badge" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border-color: rgba(14, 165, 233, 0.3);">
-                👤 بوابة دخول المتدربين وأولياء الأمور
-              </span>
-              <h2>تسجيل دخول المتدرب</h2>
-              <p>أدخل كود المتدرب أو رقم الهوية وكلمة المرور المحفوظة في ملف <code>password</code> للدخول لسجلك المهني.</p>
-            </div>
-
-            <form id="userLoginForm" autocomplete="off">
-              <div class="form-group">
-                <label for="userLoginCode" class="form-label">كود المتدرب الأكاديمي أو رقم الهوية:</label>
-                <div class="input-with-icon">
-                  <input type="text" id="userLoginCode" class="form-input" placeholder="مثال: PRG-101 أو رقم الهوية" required value="PRG-101">
-                  <span class="input-icon">🎓</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="userLoginPassword" class="form-label">كلمة المرور للمستخدم (Password):</label>
-                <div class="input-with-icon">
-                  <input type="password" id="userLoginPassword" class="form-input" placeholder="••••••••" required value="user101">
-                  <span class="input-icon">🔑</span>
-                </div>
-              </div>
-
-              <div class="form-group" style="margin-top: 24px;">
-                <button type="submit" class="btn-primary" id="btnUserLoginSubmit" style="background: linear-gradient(135deg, #0284c7, #38bdf8); color: #fff;">
-                  <span>تسجيل دخول المتدرب وعرض السجل</span>
-                  <span>←</span>
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- نموذج 3: تسجيل دخول الإدارة المركزية بكلمة المرور -->
-          <div id="adminLoginSection" style="display: none;">
-            <div class="login-header">
-              <span class="portal-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">
-                🏛️ بوابة الإدارة المركزية الشاملة
-              </span>
-              <h2>تسجيل دخول إدارة المركز</h2>
-              <p>صلاحيات متقدمة لإدارة كافة الأقسام، إنشاء ورش جديدة، والوصول لملف كلمات المرور وقاعدة البيانات.</p>
-            </div>
-
-            <form id="adminLoginForm" autocomplete="off">
-              <div class="form-group">
-                <label for="adminEmail" class="form-label">البريد الإلكتروني الإداري:</label>
-                <div class="input-with-icon">
-                  <input type="email" id="adminEmail" class="form-input" placeholder="admin@vtc.edu.sa" required value="admin@vtc.edu.sa">
-                  <span class="input-icon">✉️</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="adminPassword" class="form-label">كلمة مرور الإدارة:</label>
-                <div class="input-with-icon">
-                  <input type="password" id="adminPassword" class="form-input" placeholder="••••••••" required value="admin123">
-                  <span class="input-icon">🔑</span>
-                </div>
-              </div>
-
-              <div class="form-group" style="margin-top: 24px;">
-                <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: #fff;">
-                  <span>دخول لوحة التحكم المركزية</span>
-                  <span>←</span>
-                </button>
-              </div>
-            </form>
-          </div>
-
+    <!-- Trainer Notes -->
+    <div class="section-card fade-in">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="s-icon" style="background:rgba(30,86,160,0.1);color:var(--blue)"><i class="fa fa-comment-dots"></i></div>
+          ملاحظات المدربين
         </div>
-
-        <!-- بطاقة الدخول السريع وتجربة الـ IP وكلمات المرور للمراجع والمختبر -->
-        <div class="quick-test-panel">
-          <h3>
-            <span>🧪</span>
-            <span>لوحة الاختبار السريع (حسابات وكلمات المرور من ملف password)</span>
-          </h3>
-          <p class="guide-desc">
-            جميع كلمات المرور محفوظة في ملف منفصل باسم <code>password</code> وقابلة للتعديل والحفظ الدائم:
-          </p>
-
-          <div class="demo-account-list">
-            <!-- حسابات المهندسين -->
-            <div class="demo-account-card">
-              <div class="account-info">
-                <span class="name">م. أحمد النجار (البرمجة)</span>
-                <span class="dept-name">كلمة المرور: <code>prog123</code> | IP: <code>192.168.10.25</code></span>
-              </div>
-              <div class="account-actions">
-                <button type="button" class="btn-fill-valid" data-email="eng.programming@vtc.edu.sa" data-pass="prog123" data-ip="192.168.10.25">
-                  ✓ دخول سليم
-                </button>
-                <button type="button" class="btn-fill-invalid" data-email="eng.programming@vtc.edu.sa" data-pass="prog123" data-ip="10.0.99.12">
-                  ✗ IP مرفوض
-                </button>
-              </div>
-            </div>
-
-            <div class="demo-account-card">
-              <div class="account-info">
-                <span class="name">م. محمود عبد الرحمن (الخراطة)</span>
-                <span class="dept-name">كلمة المرور: <code>turn123</code> | IP: <code>192.168.20.40</code></span>
-              </div>
-              <div class="account-actions">
-                <button type="button" class="btn-fill-valid" data-email="eng.turning@vtc.edu.sa" data-pass="turn123" data-ip="192.168.20.40">
-                  ✓ دخول سليم
-                </button>
-                <button type="button" class="btn-fill-invalid" data-email="eng.turning@vtc.edu.sa" data-pass="turn123" data-ip="172.16.5.99">
-                  ✗ IP مرفوض
-                </button>
-              </div>
-            </div>
-
-            <!-- حسابات المتدربين (Users Password Logins) -->
-            <div class="demo-account-card" style="border-color: rgba(56, 189, 248, 0.3);">
-              <div class="account-info">
-                <span class="name">👤 فيصل الشمري (متدرب البرمجة)</span>
-                <span class="dept-name">كود: <code>PRG-101</code> | كلمة المرور: <code>user101</code></span>
-              </div>
-              <div class="account-actions">
-                <button type="button" class="btn-fill-user" data-user-code="PRG-101" data-user-pass="user101" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #0284c7; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; cursor: pointer;">
-                  دخول المتدرب
-                </button>
-              </div>
-            </div>
-
-            <div class="demo-account-card" style="border-color: rgba(56, 189, 248, 0.3);">
-              <div class="account-info">
-                <span class="name">👤 سلطان الحربي (متدرب الخراطة)</span>
-                <span class="dept-name">كود: <code>LAT-201</code> | كلمة المرور: <code>user201</code></span>
-              </div>
-              <div class="account-actions">
-                <button type="button" class="btn-fill-user" data-user-code="LAT-201" data-user-pass="user201" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #0284c7; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; cursor: pointer;">
-                  دخول المتدرب
-                </button>
-              </div>
-            </div>
-
-            <!-- حساب الإدارة -->
-            <div class="demo-account-card" style="border-color: rgba(59, 130, 246, 0.3);">
-              <div class="account-info">
-                <span class="name">🏛️ مدير المركز (Admin)</span>
-                <span class="dept-name">البريد: <code>admin@vtc.edu.sa</code> | كلمة المرور: <code>admin123</code></span>
-              </div>
-              <div class="account-actions">
-                <button type="button" class="btn-fill-admin" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; cursor: pointer;">
-                  دخول الإدارة
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
+        <span style="font-size:0.78rem;color:var(--text-light)">تُحدَّث فورياً</span>
       </div>
-    </section>
+      <div class="section-body" id="parent-notes-container"></div>
+    </div>
 
-    <!-- -----------------------------------------------------------------------
-         مشهد 2: لوحة تحكم القسم التدريبي (DEPARTMENT DASHBOARD)
-         ----------------------------------------------------------------------- -->
-    <section id="view-department-dashboard" class="view-section">
-      
-      <!-- ترويسة القسم ومعلومات الورشة والـ IP المصادق -->
-      <div class="dept-header-banner">
-        <div class="dept-title-group">
-          <h2>
-            <span id="deptHeaderIcon">⚙️</span>
-            <span id="deptHeaderName">البرمجة وتطوير الويب</span>
-          </h2>
-          <p id="deptHeaderDesc">تأهيل الكوادر الفنية على تطوير تطبيقات الويب التفاعلية، بناء قواعد البيانات وتأمين بيئات البرمجيات.</p>
-          
-          <div class="dept-meta-badges">
-            <span class="dept-meta-pill code-pill" id="deptCodePill">LAB-IT-101</span>
-            <span class="dept-meta-pill verified-ip" id="deptIpPill">
-              <span>🔒 اتصال شبكي آمن مصرح به (IP: 192.168.10.25)</span>
-            </span>
-            <span class="dept-meta-pill" id="deptBuildingPill">
-              <span>📍 المبنى الرئيسي - معمل 204</span>
-            </span>
-            <span class="dept-meta-pill" id="deptSupervisorPill">
-              <span>👨‍🏫 المشرف: م. أحمد النجار</span>
-            </span>
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 10px; align-items: center;">
-          <button type="button" class="btn-primary" id="btnOpenAddTraineeModal" style="padding: 10px 18px; font-size: 0.9rem;">
-            <span>+ إضافة متدرب للقسم</span>
-          </button>
+    <!-- Weekly Chart -->
+    <div class="section-card fade-in">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="s-icon" style="background:rgba(30,86,160,0.1);color:var(--blue)"><i class="fa fa-chart-bar"></i></div>
+          الحضور خلال الأسبوع
         </div>
       </div>
+      <div class="section-body">
+        <div class="bar-chart" id="parent-week-chart"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-      <!-- إحصاءات القسم السريعة -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-label">إجمالي متدربي القسم</div>
-            <div class="stat-value" id="statTotalTrainees">0</div>
-          </div>
-          <div class="stat-icon" style="color: var(--amber-400);">👥</div>
-        </div>
+<!-- ================================================================ TRAINER DASHBOARD ================================================================ -->
+<div id="dash-trainer" class="dashboard">
+  <nav class="dash-nav">
+    <div class="dash-nav-brand">
+      <img src="logo.jpg" class="dash-nav-logo" alt="logo" onerror="this.style.display='none'" />
+      <div><div class="dash-nav-title">K-Link</div><div class="dash-nav-subtitle">بوابة المدربين</div></div>
+    </div>
+    <div class="dash-nav-actions">
+      <div class="datetime-chip"><i class="fa fa-calendar"></i><span id="trainer-date"></span></div>
+      <div class="nav-badge nav-badge-trainer"><i class="fa fa-chalkboard-teacher"></i> م. أحمد سعيد</div>
+      <button class="btn-logout" onclick="logout()"><i class="fa fa-sign-out-alt"></i> خروج</button>
+    </div>
+  </nav>
+  <div class="dash-content">
+    <div class="dash-welcome slide-up">
+      <h1>مرحباً مدرب أحمد 👨‍🏫</h1>
+      <p>يمكنك تسجيل الحضور وإرسال الملاحظات للأولياء مباشرة من هنا</p>
+    </div>
+    <div class="stat-cards">
+      <div class="stat-card" style="animation-delay:0.1s">
+        <div class="stat-icon" style="background:rgba(30,86,160,0.1);color:var(--blue)"><i class="fa fa-users"></i></div>
+        <div><div class="stat-value" id="trainer-total">0</div><div class="stat-label">إجمالي الطلاب</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.2s">
+        <div class="stat-icon" style="background:rgba(13,158,110,0.1);color:var(--emerald)"><i class="fa fa-user-check"></i></div>
+        <div><div class="stat-value" id="trainer-present">0</div><div class="stat-label">حضروا اليوم</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.3s">
+        <div class="stat-icon" style="background:rgba(229,62,62,0.1);color:var(--red)"><i class="fa fa-user-times"></i></div>
+        <div><div class="stat-value" id="trainer-absent">0</div><div class="stat-label">غائبون</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.4s">
+        <div class="stat-icon" style="background:rgba(240,165,0,0.1);color:var(--gold)"><i class="fa fa-user-clock"></i></div>
+        <div><div class="stat-value" id="trainer-late">0</div><div class="stat-label">متأخرون</div></div>
+      </div>
+    </div>
 
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-label">نسبة حضور اليوم</div>
-            <div class="stat-value" id="statTodayAttendanceRate">0%</div>
-          </div>
-          <div class="stat-icon" style="color: var(--status-success);">📅</div>
+    <div class="section-card fade-in">
+      <div class="section-header">
+        <div class="section-title">
+          <div class="s-icon" style="background:rgba(13,158,110,0.1);color:var(--emerald)"><i class="fa fa-clipboard-list"></i></div>
+          كشف الحضور اليومي
         </div>
+        <button class="btn-sm btn-success" onclick="saveAllAttendance()"><i class="fa fa-save"></i> حفظ الكل</button>
+      </div>
+      <div class="filter-bar">
+        <select id="trainer-dept-filter" class="filter-select" onchange="filterTrainerStudents()">
+          <option value="all">جميع الأقسام</option>
+        </select>
+        <input type="text" class="filter-select" id="trainer-search" placeholder="🔍 بحث عن طالب..." oninput="filterTrainerStudents()" style="min-width:180px;" />
+        <button class="filter-btn" onclick="markAllPresent()"><i class="fa fa-check-double"></i> تحديد الكل حاضر</button>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr><th>#</th><th>اسم الطالب</th><th>القسم</th><th>الحالة</th><th>ملاحظة المدرب</th><th>الإجراء</th></tr>
+          </thead>
+          <tbody id="trainer-students-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-label">متوسط التقييم العملي</div>
-            <div class="stat-value" id="statAvgPractical">0/100</div>
-          </div>
-          <div class="stat-icon" style="color: var(--navy-500);">🛠️</div>
-        </div>
+<!-- ================================================================ ADMIN DASHBOARD ================================================================ -->
+<div id="dash-admin" class="dashboard">
+  <nav class="dash-nav">
+    <div class="dash-nav-brand">
+      <img src="logo.jpg" class="dash-nav-logo" alt="logo" onerror="this.style.display='none'" />
+      <div><div class="dash-nav-title">K-Link Admin</div><div class="dash-nav-subtitle">لوحة تحكم الإدارة</div></div>
+    </div>
+    <div class="dash-nav-actions">
+      <div class="datetime-chip"><i class="fa fa-calendar"></i><span id="admin-date"></span></div>
+      <div class="nav-badge nav-badge-admin"><i class="fa fa-shield-alt"></i> المدير العام</div>
+      <button class="btn-logout" onclick="logout()"><i class="fa fa-sign-out-alt"></i> خروج</button>
+    </div>
+  </nav>
+  <div class="dash-content">
+    <div class="dash-welcome slide-up">
+      <h1>لوحة تحكم الإدارة 🏛️</h1>
+      <p>نظرة شاملة على جميع أقسام المجمع · إدارة كاملة للحضور والمصروفات والمدربين</p>
+    </div>
+    <div class="stat-cards">
+      <div class="stat-card" style="animation-delay:0.05s">
+        <div class="stat-icon" style="background:rgba(30,86,160,0.1);color:var(--blue)"><i class="fa fa-users"></i></div>
+        <div><div class="stat-value">842</div><div class="stat-label">إجمالي الطلاب</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.1s">
+        <div class="stat-icon" style="background:rgba(13,158,110,0.1);color:var(--emerald)"><i class="fa fa-user-check"></i></div>
+        <div><div class="stat-value" id="admin-present-total">793</div><div class="stat-label">حضروا اليوم</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.15s">
+        <div class="stat-icon" style="background:rgba(229,62,62,0.1);color:var(--red)"><i class="fa fa-user-times"></i></div>
+        <div><div class="stat-value" id="admin-absent-total">35</div><div class="stat-label">غائبون اليوم</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.2s">
+        <div class="stat-icon" style="background:rgba(240,165,0,0.1);color:var(--gold)"><i class="fa fa-money-bill-wave"></i></div>
+        <div><div class="stat-value" id="admin-unpaid-count">—</div><div class="stat-label">مصروفات متأخرة</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.25s">
+        <div class="stat-icon" style="background:rgba(124,58,237,0.1);color:#7c3aed"><i class="fa fa-layer-group"></i></div>
+        <div><div class="stat-value">20</div><div class="stat-label">الأقسام النشطة</div></div>
+      </div>
+      <div class="stat-card" style="animation-delay:0.3s">
+        <div class="stat-icon" style="background:rgba(13,158,110,0.1);color:var(--emerald)"><i class="fa fa-chalkboard-teacher"></i></div>
+        <div><div class="stat-value" id="admin-trainer-count">—</div><div class="stat-label">المدربون النشطون</div></div>
+      </div>
+    </div>
 
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-label">الالتزام بالسلامة المهنية (PPE)</div>
-            <div class="stat-value" id="statAvgSafety">0%</div>
-          </div>
-          <div class="stat-icon" style="color: var(--orange-500);">🦺</div>
-        </div>
+    <div class="section-card fade-in">
+      <div class="dash-tabs">
+        <button class="dash-tab active" onclick="switchTab(this,'tab-overview')"><i class="fa fa-chart-pie"></i> نظرة عامة</button>
+        <button class="dash-tab" onclick="switchTab(this,'tab-finance')"><i class="fa fa-money-check-alt"></i> المصروفات</button>
+        <button class="dash-tab" onclick="switchTab(this,'tab-trainers')"><i class="fa fa-chalkboard-teacher"></i> المدربون</button>
+        <button class="dash-tab" onclick="switchTab(this,'tab-depts')"><i class="fa fa-layer-group"></i> الأقسام</button>
+        <button class="dash-tab" onclick="switchTab(this,'tab-attendance')"><i class="fa fa-clipboard-list"></i> سجل الحضور</button>
       </div>
 
-      <!-- تبويبات لوحة القسم الداخلي -->
-      <div class="dashboard-subnav">
-        <button type="button" class="subnav-btn active" data-subview="subview-attendance">
-          <span>📋 سجل الحضور والغياب اليومي</span>
-        </button>
-        <button type="button" class="subnav-btn" data-subview="subview-evaluations">
-          <span>⭐ تقييم الأداء العملي والملاحظات</span>
-        </button>
-        <button type="button" class="subnav-btn" data-subview="subview-equipment">
-          <span>⚙️ جاهزية ماكينات ومعدات الورشة</span>
-        </button>
+      <div id="tab-overview" class="tab-content active">
+        <div class="dept-grid" id="admin-dept-grid"></div>
       </div>
 
-      <!-- تبويب فرعي 1: الحضور والغياب -->
-      <div id="subview-attendance" class="subview-content">
-        <div class="attendance-toolbar">
-          <div class="date-selector-group">
-            <label for="attendanceDatePicker">تاريخ الحضور:</label>
-            <input type="date" id="attendanceDatePicker" class="date-input">
-          </div>
-
-          <div class="bulk-actions-group">
-            <button type="button" class="btn-secondary" id="btnMarkAllPresent">
-              <span>تسجيل الكل حاضر ✓</span>
-            </button>
-            <button type="button" class="btn-secondary" id="btnResetDayAttendance">
-              <span>إعادة تعيين اليوم</span>
-            </button>
-            <button type="button" class="btn-primary" id="btnSaveAttendance" style="padding: 8px 16px; font-size: 0.88rem;">
-              <span>💾 حفظ دائم لسجل الحضور</span>
-            </button>
-          </div>
+      <div id="tab-finance" class="tab-content">
+        <div class="filter-bar">
+          <select class="filter-select" id="finance-filter" onchange="filterFinance()">
+            <option value="all">جميع الطلاب</option>
+            <option value="unpaid">غير مدفوع</option>
+            <option value="paid">مدفوع</option>
+          </select>
+          <select class="filter-select" id="finance-dept-filter" onchange="filterFinance()"><option value="all">جميع الأقسام</option></select>
+          <input type="text" class="filter-select" id="finance-search" placeholder="🔍 بحث عن طالب..." oninput="filterFinance()" style="min-width:180px;" />
         </div>
-
-        <!-- جدول الحضور والغياب لمتدربي القسم حصراً -->
-        <div class="table-responsive">
-          <table class="industrial-table" id="attendanceTable">
-            <thead>
-              <tr>
-                <th style="width: 60px;">#</th>
-                <th>كود المتدرب</th>
-                <th>اسم المتدرب</th>
-                <th>المجموعة / المستوى</th>
-                <th>حالة الحضور اليوم</th>
-                <th>إجمالي نسبة الحضور</th>
-                <th>إجراءات</th>
-              </tr>
-            </thead>
-            <tbody id="attendanceTableBody">
-              <!-- يتم ملؤها ديناميكياً بواسطة app.js -->
-            </tbody>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>اسم الطالب</th><th>القسم</th><th>المبلغ</th><th>حالة الدفع</th><th>آخر دفعة</th><th>إجراء</th></tr></thead>
+            <tbody id="admin-finance-tbody"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- تبويب فرعي 2: تقييم الأداء والملاحظات -->
-      <div id="subview-evaluations" class="subview-content" style="display: none;">
-        <div class="table-responsive">
-          <table class="industrial-table" id="evaluationsTable">
-            <thead>
-              <tr>
-                <th>كود المتدرب</th>
-                <th>اسم المتدرب</th>
-                <th>الدرجة العملية الموزونة</th>
-                <th>مستوى السلامة المهنية</th>
-                <th>آخر ملاحظة مسجلة</th>
-                <th>إجراء التقييم</th>
-              </tr>
-            </thead>
-            <tbody id="evaluationsTableBody">
-              <!-- يتم ملؤها ديناميكياً -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- تبويب فرعي 3: جاهزية المعدات والماكينات -->
-      <div id="subview-equipment" class="subview-content" style="display: none;">
-        <div class="table-responsive">
-          <table class="industrial-table" id="equipmentTable">
-            <thead>
-              <tr>
-                <th>كود المعدة</th>
-                <th>اسم الماكينة / محطة العمل</th>
-                <th>المواصفات الفنية</th>
-                <th>الحالة التشغيلية</th>
-                <th>فحص السلامة الدوري</th>
-              </tr>
-            </thead>
-            <tbody id="equipmentTableBody">
-              <!-- يتم ملؤها ديناميكياً -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- -----------------------------------------------------------------------
-         مشهد 3: بوابة المتدرب وولي الأمر بكلمة المرور (VIEW TRAINEE / PARENT PORTAL)
-         ----------------------------------------------------------------------- -->
-    <section id="view-trainee-parent-portal" class="view-section">
-      
-      <!-- نموذج تسجيل دخول المتدرب / المستخدم بكلمة المرور -->
-      <div id="portalUserLoginHero" class="portal-search-hero">
-        <span class="dept-meta-pill code-pill" style="margin-bottom: 12px; display: inline-flex;">بوابة المتابعة الآمنة للمتدربين وأولياء الأمور</span>
-        <h2>تسجيل دخول المتدرب بكلمة المرور</h2>
-        <p>يجب إدخال كود المتدرب أو رقم الهوية وكلمة المرور للتحقق من هوية المتدرب وعرض تقارير الحضور والتقييمات المعتمدة.</p>
-
-        <form id="portalLoginForm" class="search-box-wrapper" style="max-width: 720px; flex-wrap: wrap;" autocomplete="off">
-          <input type="text" id="portalInputCode" class="search-box-input" placeholder="كود المتدرب أو الهوية (مثلاً PRG-101)..." required style="flex: 1 1 200px;">
-          <input type="password" id="portalInputPassword" class="search-box-input" placeholder="كلمة المرور (مثلاً user101)..." required style="flex: 1 1 180px;">
-          <button type="submit" class="btn-search" style="flex: 0 0 auto;">
-            <span>دخول آمن</span>
-            <span>🔒</span>
-          </button>
-        </form>
-
-        <!-- روابط سريعة لمتدربين نموذجيين مع كلمات المرور -->
-        <div class="quick-trainee-selector">
-          <span>حسابات متدربين نموذجية بكلمات المرور:</span>
-          <button type="button" class="btn-ip-quick" data-code="PRG-101" data-pass="user101">فيصل الشمري (PRG-101 / user101)</button>
-          <button type="button" class="btn-ip-quick" data-code="LAT-201" data-pass="user201">سلطان الحربي (LAT-201 / user201)</button>
-          <button type="button" class="btn-ip-quick" data-code="CNC-301" data-pass="user301">عبدالله القاسم (CNC-301 / user301)</button>
-          <button type="button" class="btn-ip-quick" data-code="PLC-401" data-pass="user401">حاتم الرويلي (PLC-401 / user401)</button>
-        </div>
-      </div>
-
-      <!-- شريط معلومات المتدرب المسجل حالياً -->
-      <div id="portalActiveUserBar" style="display: none; background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); padding: 12px 20px; border-radius: var(--radius-md); margin-bottom: 20px; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 1.2rem;">👤</span>
-          <span>جلسة المتدرب النشطة: <strong id="portalActiveUserName" style="color: #fff;">—</strong> (<span id="portalActiveUserCode" style="color: var(--amber-400); font-family: monospace;">—</span>)</span>
-        </div>
-        <div>
-          <button type="button" class="btn-secondary" id="btnPortalLogout" style="font-size: 0.8rem; padding: 4px 12px;">
-            تسجيل خروج المتدرب
-          </button>
-        </div>
-      </div>
-
-      <!-- حاوية تقرير المتدرب الشامل (تظهر بعد تسجيل الدخول بكلمة المرور) -->
-      <div id="traineeReportContainer" class="trainee-report-container">
-        
-        <!-- ترويسة رسمية للطباعة فقط -->
-        <div class="print-official-header" style="display: none;">
-          <h1>مركز التدريب المهني والتقني - بطاقة تقييم الأداء العملي</h1>
-          <p>تقرير رسمي معتمد صادر من إدارة الورش الهندسية وشؤون المتدربين</p>
-        </div>
-
-        <!-- بطاقة بيانات المتدرب الأساسية -->
-        <div class="trainee-profile-card">
-          <div class="profile-card-header">
-            <div class="trainee-main-details">
-              <div class="trainee-avatar-box" id="repAvatar">👤</div>
-              <div class="trainee-title">
-                <h3 id="repName">اسم المتدرب</h3>
-                <div class="meta">
-                  <span>الرقم الأكاديمي: <strong id="repCode" style="color: var(--amber-400);">—</strong></span>
-                  <span>الهوية: <strong id="repNationalId">—</strong></span>
-                  <span>القسم: <strong id="repDepartment">—</strong></span>
-                </div>
-              </div>
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-              <button type="button" class="btn-secondary btn-print-report" id="btnPrintReport">
-                <span>🖨️ طباعة التقرير الفني</span>
-              </button>
-            </div>
+      <div id="tab-trainers" class="tab-content">
+        <div class="section-body">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+            <button class="btn-sm btn-primary" onclick="openAddTrainer()"><i class="fa fa-plus"></i> إضافة مدرب جديد</button>
           </div>
-
-          <!-- صف مؤشرات الأداء والغياب -->
-          <div class="report-stats-row">
-            <div class="report-gauge-card">
-              <div class="gauge-label">نسبة الحضور التراكمية</div>
-              <div class="gauge-val" id="repAttendanceRate">0%</div>
-              <div style="font-size: 0.75rem; color: var(--slate-400);" id="repAttendanceCounts">0 حاضر | 0 متأخر | 0 غائب</div>
-            </div>
-
-            <div class="report-gauge-card">
-              <div class="gauge-label">معدل المهارة العملية</div>
-              <div class="gauge-val" id="repPracticalScore" style="color: #38bdf8;">0/100</div>
-              <div style="font-size: 0.75rem; color: var(--slate-400);">تنفيذ المهام والمخططات</div>
-            </div>
-
-            <div class="report-gauge-card">
-              <div class="gauge-label">مؤشر السلامة المهنية (PPE)</div>
-              <div class="gauge-val" id="repSafetyScore" style="color: var(--status-success);">0%</div>
-              <div style="font-size: 0.75rem; color: var(--slate-400);">التزام تام بمعدات الحماية</div>
-            </div>
-
-            <div class="report-gauge-card">
-              <div class="gauge-label">الدرجة الكلية الموزونة</div>
-              <div class="gauge-val" id="repTotalScore">0/100</div>
-              <div style="font-size: 0.75rem; color: var(--slate-400);">تقييم فني شامل</div>
-            </div>
-          </div>
-
-          <!-- تفاصيل الاتصال وإجراءات الطوارئ -->
-          <div style="background: rgba(0,0,0,0.3); padding: 14px 18px; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--slate-300); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-            <div><strong>رقم جوال المتدرب:</strong> <span id="repPhone">—</span></div>
-            <div><strong>ولي الأمر:</strong> <span id="repGuardianName">—</span> (<span id="repGuardianPhone">—</span>)</div>
-            <div><strong>تاريخ الالتحاق:</strong> <span id="repEnrollDate">—</span></div>
-            <div><strong>المجموعة التدريبية:</strong> <span id="repGroup">—</span></div>
-          </div>
-          
-          <div style="margin-top: 10px; padding: 10px 14px; background: rgba(234, 88, 12, 0.08); border-right: 3px solid var(--orange-500); border-radius: var(--radius-sm); font-size: 0.82rem; color: var(--slate-300);">
-            <strong>ملاحظات السلامة الطبية والورشة:</strong> <span id="repSafetyNotes">—</span>
-          </div>
-        </div>
-
-        <!-- سجل التقييمات العملية والملاحظات السلوكية والفنية -->
-        <div class="evaluation-history-section">
-          <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 8px;">
-            سجل التقييمات العملية والملاحظات المعتمدة من مهندس القسم
-          </h3>
-          <p style="font-size: 0.85rem; color: var(--slate-400); margin-bottom: 16px;">
-            تفاصيل أداء المتدرب في الورش والمشاريع العملية متضمنة ملاحظات التميز وتنبيهات السلامة المهنية.
-          </p>
-
-          <div class="eval-timeline" id="repEvalTimeline">
-            <!-- يتم إنشاؤها ديناميكياً -->
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- -----------------------------------------------------------------------
-         مشهد 4: لوحة الإدارة المركزية (VIEW ADMIN DASHBOARD)
-         ----------------------------------------------------------------------- -->
-    <section id="view-admin-dashboard" class="view-section">
-      <div class="admin-grid">
-
-        <!-- بطاقة إدارة قاعدة البيانات وملف كلمات المرور الدائم -->
-        <div class="admin-section-card" style="border-right: 4px solid var(--status-success);">
-          <div class="admin-card-header">
-            <h3>
-              <span>💾</span>
-              <span>نظام الحفظ الدائم وقاعدة البيانات وملف كلمات المرور</span>
-            </h3>
-            <div style="display: flex; gap: 8px;">
-              <button type="button" class="btn-primary" id="btnExportPermanentBackup" style="padding: 6px 14px; font-size: 0.82rem;">
-                <span>تصدير نسخة كاملة (JSON Backup)</span>
-              </button>
-              <button type="button" class="btn-secondary" id="btnResetAllDefaults" style="padding: 6px 14px; font-size: 0.82rem; color: #f87171;">
-                <span>استعادة البيانات الافتراضية</span>
-              </button>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; font-size: 0.85rem; color: var(--slate-300);">
-            <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-              <div style="color: var(--amber-400); font-weight: 700; margin-bottom: 4px;">📂 ملف قاعدة البيانات الدائمة:</div>
-              <code style="color: #6ee7b7; font-family: monospace;">data/vtc_data.json</code>
-              <div style="font-size: 0.78rem; color: var(--slate-400); margin-top: 4px;">يحتوي على كافة سجلات الحضور والغياب، المتدربين، التقييمات، والورش.</div>
-            </div>
-            <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-              <div style="color: var(--amber-400); font-weight: 700; margin-bottom: 4px;">🔑 ملف كلمات المرور المنفصل:</div>
-              <code style="color: #6ee7b7; font-family: monospace;">password</code>
-              <div style="font-size: 0.78rem; color: var(--slate-400); margin-top: 4px;">يحتوي على كافة كلمات مرور الإدارة، مهندسي الورش، وجميع المتدربين (Users).</div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- إدارة الأقسام التدريبية وإضافة قسم جديد ديناميكياً -->
-        <div class="admin-section-card">
-          <div class="admin-card-header">
-            <h3>
-              <span>🏢</span>
-              <span>الأقسام التدريبية المعتمدة بالمركز</span>
-            </h3>
-            <button type="button" class="btn-primary" id="btnOpenAddDepartmentModal" style="padding: 8px 16px; font-size: 0.88rem;">
-              <span>+ إضافة قسم تدريبي جديد</span>
-            </button>
-          </div>
-
-          <p style="font-size: 0.85rem; color: var(--slate-400); margin-bottom: 18px;">
-            لكل قسم تدريبي رمز ورشة خاص وعنوان IP مصرح به لشبكته المحلية وكلمة مرور مخصصة تُحفظ في ملف <code>password</code>.
-          </p>
-
-          <div class="departments-manage-grid" id="adminDepartmentsList">
-            <!-- تملأ ديناميكياً -->
-          </div>
-        </div>
-
-        <!-- سجل الرقابة والأمان (Audit Log) لمحاولات الدخول وحالات الـ IP المحظورة -->
-        <div class="admin-section-card">
-          <div class="admin-card-header">
-            <h3>
-              <span>🛡️</span>
-              <span>سجل الأمان والرقابة الشبكية (Security & IP Audit Trail)</span>
-            </h3>
-            <button type="button" class="btn-secondary" id="btnClearAuditLog" style="font-size: 0.78rem; padding: 4px 10px;">
-              <span>تفريغ السجل</span>
-            </button>
-          </div>
-
-          <p style="font-size: 0.85rem; color: var(--slate-400); margin-bottom: 14px;">
-            سجل حي يوثق كل محاولة دخول، ومطابقة الـ IP، وفحص كلمات المرور الصادرة ضد الشبكات غير المصرحة.
-          </p>
-
-          <div class="table-responsive">
-            <table class="industrial-table" id="auditLogTable">
-              <thead>
-                <tr>
-                  <th>وقت المحاولة</th>
-                  <th>المستخدم / المهندس</th>
-                  <th>القسم المستهدف</th>
-                  <th>الـ IP المصرح</th>
-                  <th>الـ IP المستخدم</th>
-                  <th>نتيجة الفحص الأمني</th>
-                </tr>
-              </thead>
-              <tbody id="auditLogTableBody">
-                <!-- تملأ ديناميكياً -->
-              </tbody>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>#</th><th>اسم المدرب</th><th>القسم</th><th>الكود</th><th>الحالة</th><th>إعادة توليد الكود</th></tr></thead>
+              <tbody id="admin-trainers-tbody"></tbody>
             </table>
           </div>
         </div>
-
       </div>
-    </section>
 
-  </main>
-
-  <!-- =========================================================================
-       النوافذ المنبثقة (Modals)
-       ========================================================================= -->
-
-  <!-- نافذة 1: إضافة متدرب جديد للقسم مع تعيين كلمة المرور -->
-  <div class="modal-overlay" id="modalAddTrainee">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3>إضافة متدرب جديد وتعيين كلمة المرور</h3>
-        <button type="button" class="modal-close-btn" data-close="modalAddTrainee">&times;</button>
-      </div>
-      <form id="formAddTrainee">
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="newTraineeName" class="form-label">اسم المتدرب الرباعي:</label>
-            <input type="text" id="newTraineeName" class="form-input" placeholder="مثال: سلمان بن فهد التميمي" required>
+      <div id="tab-depts" class="tab-content">
+        <div class="section-body">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+            <button class="btn-sm btn-primary" onclick="openAddDept()"><i class="fa fa-plus"></i> إضافة قسم</button>
           </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="form-group">
-              <label for="newTraineeNationalId" class="form-label">رقم الهوية الوطنية / الإقامة:</label>
-              <input type="text" id="newTraineeNationalId" class="form-input" placeholder="10xxxxxxxx" maxlength="10" required>
-            </div>
-            <div class="form-group">
-              <label for="newTraineePhone" class="form-label">رقم جوال المتدرب:</label>
-              <input type="tel" id="newTraineePhone" class="form-input" placeholder="05xxxxxxxx" required>
-            </div>
-          </div>
-
-          <!-- حقل كلمة المرور للمستخدم لحفظها في ملف password -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="form-group">
-              <label for="newTraineePassword" class="form-label">كلمة مرور دخول المتدرب (Password):</label>
-              <input type="password" id="newTraineePassword" class="form-input" placeholder="••••••••" value="user123" required>
-              <small style="font-size: 0.72rem; color: var(--amber-400);">تُحفظ تلقائياً في ملف password المنفصل</small>
-            </div>
-            <div class="form-group">
-              <label for="newTraineeGroup" class="form-label">المجموعة التدريبية / المستوى:</label>
-              <input type="text" id="newTraineeGroup" class="form-input" placeholder="المجموعة أ (تأسيسي)" value="المجموعة أ (تأسيسي)">
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="form-group">
-              <label for="newGuardianName" class="form-label">اسم ولي الأمر / جهة الاتصال للطوارئ:</label>
-              <input type="text" id="newGuardianName" class="form-input" placeholder="اسم ولي الأمر" required>
-            </div>
-            <div class="form-group">
-              <label for="newGuardianPhone" class="form-label">جوال ولي الأمر للطوارئ:</label>
-              <input type="tel" id="newGuardianPhone" class="form-input" placeholder="05xxxxxxxx" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="newTraineeSafety" class="form-label">ملاحظات السلامة والاعتبارات الصحية:</label>
-            <textarea id="newTraineeSafety" class="form-input" rows="2" placeholder="أي حالات صحية أو متطلبات وقاية شخصية خاصة...">سليم طبياً - جاهز للعمل والتدريب بالورشة</textarea>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>#</th><th>اسم القسم</th><th>عدد الطلاب</th><th>عدد المدربين</th><th>معدل الحضور</th><th>الحالة</th></tr></thead>
+              <tbody id="admin-depts-tbody"></tbody>
+            </table>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" data-close="modalAddTrainee">إلغاء</button>
-          <button type="submit" class="btn-primary" style="width: auto;">حفظ دائم وتسجيل المتدرب</button>
+      </div>
+
+      <div id="tab-attendance" class="tab-content">
+        <div class="filter-bar">
+          <select class="filter-select" id="att-dept-filter" onchange="filterFullAttendance()"><option value="all">جميع الأقسام</option></select>
+          <select class="filter-select" id="att-status-filter" onchange="filterFullAttendance()">
+            <option value="all">جميع الحالات</option>
+            <option value="present">حاضر</option>
+            <option value="absent">غائب</option>
+            <option value="late">متأخر</option>
+          </select>
+          <input type="text" class="filter-select" id="att-search" placeholder="🔍 بحث..." oninput="filterFullAttendance()" style="min-width:180px;" />
         </div>
-      </form>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>اسم الطالب</th><th>الرقم القومي</th><th>القسم</th><th>الحالة اليوم</th><th>وقت الحضور</th><th>ملاحظة المدرب</th></tr></thead>
+            <tbody id="admin-attendance-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
+</div>
 
-  <!-- نافذة 2: تقييم الأداء العملي والملاحظات -->
-  <div class="modal-overlay" id="modalEvaluateTrainee">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3>تقييم الأداء العملي والسلامة المهنية</h3>
-        <button type="button" class="modal-close-btn" data-close="modalEvaluateTrainee">&times;</button>
-      </div>
-      <form id="formEvaluateTrainee">
-        <input type="hidden" id="evalTraineeId">
-        <div class="modal-body">
-          <div style="background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 16px;">
-            <div style="font-weight: 800; color: #fff;" id="evalModalTraineeName">اسم المتدرب</div>
-            <div style="font-size: 0.8rem; color: var(--amber-400);" id="evalModalTraineeCode">كود المتدرب</div>
-          </div>
-
-          <div class="form-group">
-            <label for="evalTitle" class="form-label">عنوان التمرين / المهمة العملية:</label>
-            <input type="text" id="evalTitle" class="form-input" placeholder="مثال: تنفيذ مشروع تشغيل واختبار لوحة تحكم" required>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="form-group">
-              <label for="evalPracticalScore" class="form-label">المهارة العملية وجودة التنفيذ (40%):</label>
-              <input type="number" id="evalPracticalScore" class="form-input" min="0" max="100" value="90" required>
-            </div>
-            <div class="form-group">
-              <label for="evalSafetyScore" class="form-label">الالتزام بالسلامة وارتداء PPE (30%):</label>
-              <input type="number" id="evalSafetyScore" class="form-input" min="0" max="100" value="95" required>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="form-group">
-              <label for="evalMaintenanceScore" class="form-label">صيانة ونظافة محطة العمل (15%):</label>
-              <input type="number" id="evalMaintenanceScore" class="form-input" min="0" max="100" value="90" required>
-            </div>
-            <div class="form-group">
-              <label for="evalTheoryScore" class="form-label">الفهم النظري والمخططات (15%):</label>
-              <input type="number" id="evalTheoryScore" class="form-input" min="0" max="100" value="85" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="evalNoteType" class="form-label">نوع الملاحظة:</label>
-            <select id="evalNoteType" class="form-input">
-              <option value="technical">ملاحظة فنية وتقنية (Technical Note)</option>
-              <option value="excellence">إشادة وتميز عملي (Commendation)</option>
-              <option value="safety">تنبيه سلامة مهنية (Safety Warning)</option>
-              <option value="disciplinary">ملاحظة سلوكية وانضباطية (Disciplinary)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="evalNotes" class="form-label">نص الملاحظات والتوصيات المهنية:</label>
-            <textarea id="evalNotes" class="form-input" rows="3" placeholder="اكتب الملاحظات والتوجيهات الفنية للمتدرب..." required></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" data-close="modalEvaluateTrainee">إلغاء</button>
-          <button type="submit" class="btn-primary" style="width: auto;">اعتماد وحفظ التقييم الدائم</button>
-        </div>
-      </form>
+<!-- ================================================================ INNER MODALS ================================================================ -->
+<div id="modal-add-trainer" class="inner-modal">
+  <div class="inner-modal-box">
+    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:20px;color:var(--text-dark)"><i class="fa fa-plus-circle" style="color:var(--blue)"></i> إضافة مدرب جديد</h3>
+    <div class="form-group"><label class="form-label">اسم المدرب</label><input id="new-trainer-name" class="form-input" type="text" placeholder="الاسم الكامل" /></div>
+    <div class="form-group"><label class="form-label">القسم</label><select id="new-trainer-dept" class="form-input"></select></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn-login btn-trainer" style="flex:1;padding:11px" onclick="addTrainer()"><i class="fa fa-plus"></i> إضافة</button>
+      <button onclick="closeInnerModal('modal-add-trainer')" style="flex:1;padding:11px;border:1.5px solid var(--slate-mid);border-radius:8px;background:none;font-family:Cairo,sans-serif;font-size:0.9rem;cursor:pointer">إلغاء</button>
     </div>
   </div>
+</div>
 
-  <!-- نافذة 3: إضافة قسم تدريبي جديد ديناميكياً (للإدارة) -->
-  <div class="modal-overlay" id="modalAddDepartment">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3>إضافة قسم تدريبي وورشة هندسية جديدة</h3>
-        <button type="button" class="modal-close-btn" data-close="modalAddDepartment">&times;</button>
-      </div>
-      <form id="formAddDepartment">
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="newDeptName" class="form-label">اسم القسم التدريبي:</label>
-            <input type="text" id="newDeptName" class="form-input" placeholder="مثال: لحام وتشكيل المعادن" required>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="form-group">
-              <label for="newDeptCode" class="form-label">رمز الورشة / المعمل:</label>
-              <input type="text" id="newDeptCode" class="form-input" placeholder="مثال: WRK-WELD-505" required>
-            </div>
-            <div class="form-group">
-              <label for="newDeptAuthorizedIp" class="form-label">عنوان IP المصرح به لشبكة القسم:</label>
-              <input type="text" id="newDeptAuthorizedIp" class="form-input" placeholder="مثال: 192.168.50.80" value="192.168.50.80" required>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="form-group">
-              <label for="newDeptEngName" class="form-label">اسم المهندس المشرف:</label>
-              <input type="text" id="newDeptEngName" class="form-input" placeholder="م. خالد الشريف" required>
-            </div>
-            <div class="form-group">
-              <label for="newDeptEngEmail" class="form-label">البريد الإلكتروني للدخول:</label>
-              <input type="email" id="newDeptEngEmail" class="form-input" placeholder="eng.welding@vtc.edu.sa" required>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="form-group">
-              <label for="newDeptEngPass" class="form-label">كلمة المرور (تُحفظ في ملف password):</label>
-              <input type="password" id="newDeptEngPass" class="form-input" placeholder="••••••••" value="weld123" required>
-            </div>
-            <div class="form-group">
-              <label for="newDeptCapacity" class="form-label">الطاقة الاستيعابية للورشة:</label>
-              <input type="number" id="newDeptCapacity" class="form-input" value="20" min="5" max="50">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="newDeptDesc" class="form-label">وصف القسم والمهارات المستهدفة:</label>
-            <textarea id="newDeptDesc" class="form-input" rows="2" placeholder="وصف موجز للمهارات التي يكتسبها المتدربون في هذه الورشة...">تدريب متخصص على عمليات اللحام بالقوس الكهربائي وغاز الأرجون TIG/MIG وقراءة المخططات الفنية ومعايير السلامة المهنية.</textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" data-close="modalAddDepartment">إلغاء</button>
-          <button type="submit" class="btn-primary" style="width: auto;">إنشاء وتفعيل وحفظ القسم</button>
-        </div>
-      </form>
+<div id="modal-add-dept" class="inner-modal">
+  <div class="inner-modal-box">
+    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:20px;color:var(--text-dark)"><i class="fa fa-layer-group" style="color:var(--blue)"></i> إضافة قسم جديد</h3>
+    <div class="form-group"><label class="form-label">اسم القسم</label><input id="new-dept-name" class="form-input" type="text" placeholder="اسم القسم الجديد" /></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn-login btn-primary" style="flex:1;padding:11px;background:var(--blue)" onclick="addDept()"><i class="fa fa-plus"></i> إضافة</button>
+      <button onclick="closeInnerModal('modal-add-dept')" style="flex:1;padding:11px;border:1.5px solid var(--slate-mid);border-radius:8px;background:none;font-family:Cairo,sans-serif;font-size:0.9rem;cursor:pointer">إلغاء</button>
     </div>
   </div>
+</div>
 
-  <!-- حاوية إشعارات Toast التفاعلية -->
-  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+<div class="toast-container" id="toastContainer"></div>
 
-  <!-- تذييل الصفحة -->
-  <footer class="main-footer">
-    <div class="footer-content">
-      <div>
-        <strong>نظام إدارة مركز التدريب المهني</strong> | جاهز للاستخدام الفعلي &copy; 2026
+<!-- ================================================================ JAVASCRIPT ================================================================ -->
+<script>
+/* ============ DATA ============ */
+const DEPARTMENTS = [
+  {id:1, name:'البترول والغاز الطبيعي',       tag:'petroleum',    icon:'🛢️', students:52, trainers:3, attendance:94},
+  {id:2, name:'تقنية البرمجة والمعلومات',     tag:'programming',  icon:'💻', students:48, trainers:2, attendance:97},
+  {id:3, name:'الكهرباء والإلكترونيات',        tag:'',             icon:'⚡', students:44, trainers:2, attendance:91},
+  {id:4, name:'الميكانيكا والسيارات',          tag:'',             icon:'⚙️', students:46, trainers:3, attendance:89},
+  {id:5, name:'الحاسبات وشبكات الاتصال',       tag:'',             icon:'🌐', students:40, trainers:2, attendance:95},
+  {id:6, name:'تكنولوجيا البناء والتشييد',     tag:'',             icon:'🏗️', students:38, trainers:2, attendance:88},
+  {id:7, name:'المساحة والجيوديسيا',           tag:'',             icon:'📐', students:30, trainers:2, attendance:92},
+  {id:8, name:'تكنولوجيا الغزل والنسيج',       tag:'',             icon:'🧵', students:36, trainers:2, attendance:86},
+  {id:9, name:'الصناعات الغذائية',             tag:'',             icon:'🍎', students:34, trainers:2, attendance:90},
+  {id:10,name:'الطباعة والتغليف',              tag:'',             icon:'🖨️', students:28, trainers:1, attendance:93},
+  {id:11,name:'الصناعات الخشبية',              tag:'',             icon:'🪵', students:26, trainers:1, attendance:87},
+  {id:12,name:'تكييف الهواء والتبريد',         tag:'',             icon:'❄️', students:32, trainers:2, attendance:94},
+  {id:13,name:'السباكة والصرف الصحي',          tag:'',             icon:'🔧', students:24, trainers:1, attendance:85},
+  {id:14,name:'تكنولوجيا الليزر والضوئيات',    tag:'',             icon:'🔬', students:22, trainers:1, attendance:96},
+  {id:15,name:'الرسم الصناعي وCAD',            tag:'',             icon:'📏', students:35, trainers:2, attendance:93},
+  {id:16,name:'الإلكترونيات الصناعية',         tag:'',             icon:'🔌', students:42, trainers:2, attendance:91},
+  {id:17,name:'الكيمياء الصناعية',             tag:'',             icon:'⚗️', students:30, trainers:2, attendance:90},
+  {id:18,name:'ميكانيكا الطيران',              tag:'',             icon:'✈️', students:20, trainers:1, attendance:98},
+  {id:19,name:'تقنية الروبوتات والأتمتة',      tag:'',             icon:'🤖', students:25, trainers:1, attendance:96},
+  {id:20,name:'الصحة والسلامة المهنية',        tag:'',             icon:'🦺', students:28, trainers:2, attendance:89},
+];
+
+const TRAINERS = [
+  {id:1, name:'م. أحمد محمد سعيد',   dept:1,  code:'TR-001', active:true},
+  {id:2, name:'م. سارة علي إبراهيم', dept:2,  code:'TR-002', active:true},
+  {id:3, name:'م. محمد حسن عبدالله', dept:3,  code:'TR-003', active:true},
+  {id:4, name:'م. فاطمة أحمد خالد',  dept:4,  code:'TR-004', active:true},
+  {id:5, name:'م. علي سيد إسماعيل',  dept:1,  code:'TR-005', active:true},
+  {id:6, name:'م. نور الدين رمضان',   dept:2,  code:'TR-006', active:true},
+  {id:7, name:'م. هبة عبدالرحمن',    dept:5,  code:'TR-007', active:false},
+  {id:8, name:'م. كريم وليد منصور',  dept:6,  code:'TR-008', active:true},
+  {id:9, name:'م. دينا حمدي سالم',   dept:7,  code:'TR-009', active:true},
+  {id:10,name:'م. طارق شوقي فتحي',   dept:8,  code:'TR-010', active:true},
+];
+
+const fnames = ['أحمد','محمد','علي','يوسف','عمر','خالد','طارق','كريم','مصطفى','إبراهيم','سارة','فاطمة','نور','هبة','دينا','ريم','لمياء','شيرين','نهى','ميار'];
+const lnames = ['محمد','أحمد','علي','حسن','إبراهيم','السيد','عبدالله','خالد','رمضان','منصور','سالم','سعيد','عبدالرحمن','فتحي','شوقي','وليد','نبيل','رضا','جمال','حمدي'];
+const statusPool = ['present','present','present','present','present','absent','late'];
+const notePool   = ['','','ممتاز في الأداء','يحتاج تحسين في الحضور','أداء جيد اليوم','تأخر بدون إذن','','نشاط ومشاركة ممتازة'];
+
+function rnd(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function rndTime(late=false){
+  const h = late ? 9 : (Math.floor(Math.random()*2)+8);
+  const m = String(Math.floor(Math.random()*59)).padStart(2,'0');
+  return `${h}:${m} صباحاً`;
+}
+
+const STUDENTS = [];
+let sid = 1;
+DEPARTMENTS.forEach(d => {
+  for(let i=0;i<d.students;i++){
+    const st = rnd(statusPool);
+    const nid = '309'+String(Math.floor(Math.random()*99999999)).padStart(8,'0')+String(Math.floor(Math.random()*99)).padStart(2,'0');
+    STUDENTS.push({
+      id:sid++, name:rnd(fnames)+' '+rnd(lnames), dept:d.id, deptName:d.name,
+      nid, status:st, note:rnd(notePool),
+      time: st==='present'?rndTime():st==='late'?rndTime(true):'-',
+      paid: Math.random()>0.44, amount:1200,
+      lastPaid: Math.random()>0.5?'3/11/2025':'1/10/2025',
+    });
+  }
+});
+
+// Fixed parent student
+const PS = STUDENTS[8];
+PS.nid='30901150100123'; PS.name='أحمد عمر محمد'; PS.dept=2; PS.paid=true; PS.status='present'; PS.time='8:05 صباحاً';
+
+const TRAINER_NOTES = [
+  {trainer:'م. سارة علي',  date:'اليوم · 10:30 ص',  text:'الطالب أحمد أدى أداءً رائعاً في تمرين البرمجة اليوم، واستوعب المفاهيم بشكل سريع وأكمل التمرين بنجاح.'},
+  {trainer:'م. أحمد سعيد', date:'أمس · 11:15 ص',    text:'حضر الطالب بانتظام وكان نشيطاً في المشاركة. يُنصح بالاستمرار في هذا المستوى.'},
+  {trainer:'م. سارة علي',  date:'20/11/2025',         text:'أرجو التنبيه على الطالب بضرورة إحضار أدوات الرسم في الحصص القادمة.'},
+];
+
+const WEEK_DATA = [
+  {day:'الأحد',    status:'present'},
+  {day:'الاثنين',  status:'present'},
+  {day:'الثلاثاء', status:'late'},
+  {day:'الأربعاء', status:'present'},
+  {day:'الخميس',  status:'absent'},
+];
+
+/* ============ STATE ============ */
+let trainerAttendance = {};
+let trainerNotes = {};
+
+/* ============ PARTICLES ============ */
+(function(){
+  const cv=document.getElementById('particles-canvas');
+  const cx=cv.getContext('2d');
+  let pts=[];
+  function resize(){ cv.width=window.innerWidth; cv.height=window.innerHeight; }
+  function mkPt(){ return {x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.8+0.3,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,a:Math.random()*.4+.1}; }
+  function init(){ resize(); pts=Array.from({length:70},mkPt); }
+  function draw(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    if(!document.getElementById('page-landing').classList.contains('active')){ requestAnimationFrame(draw);return; }
+    pts.forEach((p,i)=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0)p.x=cv.width; if(p.x>cv.width)p.x=0;
+      if(p.y<0)p.y=cv.height; if(p.y>cv.height)p.y=0;
+      cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      cx.fillStyle=`rgba(255,255,255,${p.a})`; cx.fill();
+      for(let j=i+1;j<pts.length;j++){
+        const q=pts[j]; const d=Math.hypot(p.x-q.x,p.y-q.y);
+        if(d<110){ cx.beginPath();cx.moveTo(p.x,p.y);cx.lineTo(q.x,q.y);cx.strokeStyle=`rgba(255,255,255,${.07*(1-d/110)})`;cx.lineWidth=0.5;cx.stroke(); }
+      }
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize);
+  init(); draw();
+})();
+
+/* ============ HELPERS ============ */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.dashboard').forEach(d=>d.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el){ el.classList.contains('dashboard')?el.classList.add('active'):el.classList.add('active'); }
+}
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function openInnerModal(id){ document.getElementById(id).classList.add('open'); }
+function closeInnerModal(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov)ov.classList.remove('open'); }));
+document.querySelectorAll('.inner-modal').forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov)ov.classList.remove('open'); }));
+
+function showToast(msg,type='success',icon=null){
+  const icons={success:'fa-check-circle',danger:'fa-exclamation-circle',warning:'fa-exclamation-triangle',info:'fa-info-circle'};
+  const ic=icon||icons[type]||'fa-info-circle';
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<i class="fa ${ic}"></i><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(20px)'; t.style.transition='all 0.3s ease'; },3000);
+  setTimeout(()=>t.remove(),3400);
+}
+
+function getArabicDate(){
+  return new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+function updateDates(){
+  const d=getArabicDate();
+  ['parent-date','trainer-date','admin-date'].forEach(id=>{ const el=document.getElementById(id); if(el)el.textContent=d; });
+}
+
+/* ============ LOGIN ============ */
+function loginParent(e){
+  e.preventDefault();
+  const nid=document.getElementById('parent-nid').value.trim();
+  const pw =document.getElementById('parent-pass').value.trim();
+  const err=document.getElementById('parent-error');
+  if(nid==='30901150100123'&&pw==='parent123'){
+    err.style.display='none';
+    closeModal('modal-parent');
+    initParentDashboard();
+    showPage('dash-parent');
+    showToast('مرحباً بك في بوابة ولي الأمر 👋','success');
+  } else {
+    err.style.display='block';
+    ['parent-nid','parent-pass'].forEach(id=>{ document.getElementById(id).classList.add('error'); setTimeout(()=>document.getElementById(id).classList.remove('error'),2500); });
+    setTimeout(()=>err.style.display='none',3000);
+  }
+}
+function loginTrainer(e){
+  e.preventDefault();
+  const code=document.getElementById('trainer-code').value.trim();
+  const pw  =document.getElementById('trainer-pass').value.trim();
+  const err =document.getElementById('trainer-error');
+  if(code==='TR-001'&&pw==='trainer123'){
+    err.style.display='none';
+    closeModal('modal-trainer');
+    initTrainerDashboard();
+    showPage('dash-trainer');
+    showToast('مرحباً م. أحمد · لوحة التحكم جاهزة','success');
+  } else { err.style.display='block'; }
+}
+function loginAdmin(e){
+  e.preventDefault();
+  const code=document.getElementById('admin-code').value.trim();
+  const pw  =document.getElementById('admin-pass').value.trim();
+  const err =document.getElementById('admin-error');
+  if(code==='ADMIN-2025'&&pw==='admin123'){
+    err.style.display='none';
+    closeModal('modal-admin');
+    initAdminDashboard();
+    showPage('dash-admin');
+    showToast('مرحباً بالمدير · تم الدخول بأمان 🛡️','success');
+  } else { err.style.display='block'; }
+}
+function logout(){
+  document.querySelectorAll('.dashboard').forEach(d=>d.classList.remove('active'));
+  showPage('page-landing');
+  showToast('تم تسجيل الخروج بنجاح','info','fa-sign-out-alt');
+}
+
+/* ============ PARENT DASHBOARD ============ */
+function initParentDashboard(){
+  updateDates();
+  document.getElementById('parent-student-name').textContent=PS.name;
+  document.getElementById('parent-welcome-name').textContent='أسرة '+PS.name.split(' ')[0];
+  const st=PS.status;
+  const badge=document.getElementById('today-status-badge');
+  const card=document.getElementById('today-attendance-card');
+  const icon=document.getElementById('att-icon');
+  const stxt=document.getElementById('attendance-status-text');
+  const ttxt=document.getElementById('attendance-time-text');
+  card.className='attendance-status-card '+st;
+  if(st==='present'){ badge.className='badge badge-present'; badge.innerHTML='<i class="fa fa-check-circle"></i> حاضر'; icon.textContent='✅'; stxt.textContent='الطالب حاضر اليوم'; ttxt.textContent='وقت الحضور: '+PS.time+' · المدرب: م. سارة علي'; }
+  else if(st==='absent'){ badge.className='badge badge-absent'; badge.innerHTML='<i class="fa fa-times-circle"></i> غائب'; icon.textContent='❌'; stxt.textContent='الطالب غائب اليوم'; ttxt.textContent='لم يُسجَّل حضور اليوم · يُرجى التواصل مع إدارة المجمع'; }
+  else { badge.className='badge badge-late'; badge.innerHTML='<i class="fa fa-clock"></i> متأخر'; icon.textContent='⏰'; stxt.textContent='الطالب متأخر اليوم'; ttxt.textContent='وقت الحضور: '+PS.time+' · تأخر عن موعد الدراسة'; }
+  const fa=document.getElementById('finance-alert');
+  if(PS.paid){ fa.className='alert-banner alert-success'; fa.innerHTML='<i class="fa fa-check-circle fa-lg"></i><div><strong>المصروفات مدفوعة ✓</strong><br/><span style="font-size:0.8rem;opacity:0.9">تم دفع مصروفات شهر نوفمبر 2025 بتاريخ 3/11/2025 · المبلغ: 1,200 جنيه</span></div>'; }
+  else { fa.className='alert-banner alert-danger'; fa.innerHTML='<i class="fa fa-exclamation-triangle fa-lg"></i><div><strong>⚠️ تنبيه: مصروفات متأخرة!</strong><br/><span style="font-size:0.8rem;opacity:0.9">مصروفات نوفمبر 2025 غير مدفوعة · آخر موعد: 15/11/2025</span></div>'; }
+  const nc=document.getElementById('parent-notes-container');
+  nc.innerHTML=TRAINER_NOTES.map(n=>`<div class="note-card"><div class="note-card-header"><span class="note-trainer"><i class="fa fa-chalkboard-teacher"></i> ${n.trainer}</span><span class="note-date">${n.date}</span></div><div class="note-text">${n.text}</div></div>`).join('');
+  buildWeekChart();
+}
+function buildWeekChart(){
+  const ch=document.getElementById('parent-week-chart');
+  const cols={present:'#0d9e6e',absent:'#e53e3e',late:'#f0a500'};
+  const hts ={present:'85%',absent:'28%',late:'52%'};
+  const labs ={present:'حاضر',absent:'غائب',late:'متأخر'};
+  ch.innerHTML=WEEK_DATA.map(d=>`<div class="bar-col"><div class="bar-val">${labs[d.status]}</div><div class="bar-fill" style="height:${hts[d.status]};background:${cols[d.status]};min-height:16px;"></div><div class="bar-label">${d.day}</div></div>`).join('');
+}
+
+/* ============ TRAINER DASHBOARD ============ */
+function initTrainerDashboard(){
+  updateDates();
+  populateDeptFilter('trainer-dept-filter');
+  renderTrainerTable();
+  updateTrainerStats();
+}
+function populateDeptFilter(selId){
+  const sel=document.getElementById(selId);
+  if(!sel)return;
+  while(sel.options.length>1)sel.remove(1);
+  DEPARTMENTS.forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.icon+' '+d.name; sel.appendChild(o); });
+}
+function getTrainerStudents(){
+  const df=document.getElementById('trainer-dept-filter').value;
+  const sr=(document.getElementById('trainer-search').value||'').toLowerCase();
+  return STUDENTS.filter(s=>{ const dm=df==='all'||s.dept==df; const sm=!sr||s.name.includes(sr)||s.nid.includes(sr); return dm&&sm; });
+}
+function statusLabel(st){ if(st==='present')return '<i class="fa fa-check-circle"></i> حاضر'; if(st==='absent')return '<i class="fa fa-times-circle"></i> غائب'; return '<i class="fa fa-clock"></i> متأخر'; }
+function renderTrainerTable(){
+  const tbody=document.getElementById('trainer-students-tbody');
+  const list=getTrainerStudents();
+  tbody.innerHTML=list.map((s,idx)=>{
+    const cs=trainerAttendance[s.id]||s.status;
+    const cn=trainerNotes[s.id]!==undefined?trainerNotes[s.id]:s.note;
+    const dObj=DEPARTMENTS.find(d=>d.id===s.dept);
+    return `<tr id="row-${s.id}">
+      <td style="color:var(--text-light);font-weight:600">${idx+1}</td>
+      <td><strong>${s.name}</strong></td>
+      <td style="font-size:0.75rem;color:var(--text-mid)">${dObj?dObj.icon+' '+dObj.name.substring(0,16)+'...':''}</td>
+      <td id="sc-${s.id}"><span class="badge badge-${cs}">${statusLabel(cs)}</span></td>
+      <td><input type="text" class="note-input" id="note-${s.id}" value="${cn}" placeholder="اكتب ملاحظة..." onchange="saveNote(${s.id},this.value)" /></td>
+      <td><div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn-sm btn-present ${cs==='present'?'active':''}" onclick="setStatus(${s.id},'present')"><i class="fa fa-check"></i> حاضر</button>
+        <button class="btn-sm btn-absent ${cs==='absent'?'active':''}" onclick="setStatus(${s.id},'absent')"><i class="fa fa-times"></i> غائب</button>
+        <button class="btn-sm btn-late ${cs==='late'?'active':''}" onclick="setStatus(${s.id},'late')"><i class="fa fa-clock"></i> متأخر</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+function setStatus(id,st){
+  trainerAttendance[id]=st;
+  const stu=STUDENTS.find(s=>s.id===id); if(stu)stu.status=st;
+  const cell=document.getElementById(`sc-${id}`); if(cell)cell.innerHTML=`<span class="badge badge-${st}">${statusLabel(st)}</span>`;
+  const row=document.getElementById(`row-${id}`);
+  if(row){ row.querySelectorAll('.btn-present,.btn-absent,.btn-late').forEach(b=>b.classList.remove('active')); const tgt=row.querySelector(`.btn-${st}`); if(tgt)tgt.classList.add('active'); }
+  updateTrainerStats();
+}
+function saveNote(id,text){
+  trainerNotes[id]=text;
+  const stu=STUDENTS.find(s=>s.id===id); if(stu)stu.note=text;
+}
+function updateTrainerStats(){
+  const all=getTrainerStudents();
+  const p=all.filter(s=>(trainerAttendance[s.id]||s.status)==='present').length;
+  const a=all.filter(s=>(trainerAttendance[s.id]||s.status)==='absent').length;
+  const l=all.filter(s=>(trainerAttendance[s.id]||s.status)==='late').length;
+  document.getElementById('trainer-total').textContent=all.length;
+  document.getElementById('trainer-present').textContent=p;
+  document.getElementById('trainer-absent').textContent=a;
+  document.getElementById('trainer-late').textContent=l;
+}
+function filterTrainerStudents(){ renderTrainerTable(); updateTrainerStats(); }
+function markAllPresent(){
+  getTrainerStudents().forEach(s=>{ trainerAttendance[s.id]='present'; s.status='present'; });
+  renderTrainerTable(); updateTrainerStats();
+  showToast('تم تحديد جميع الطلاب حاضرين ✓','success');
+}
+function saveAllAttendance(){ showToast('تم حفظ كشف الحضور بنجاح وإرسال التحديثات للأولياء 📋','success'); }
+
+/* ============ ADMIN DASHBOARD ============ */
+function initAdminDashboard(){
+  updateDates();
+  buildDeptGrid();
+  buildFinanceTable();
+  buildTrainersTable();
+  buildDeptsTable();
+  buildFullAttendanceTable();
+  populateAdminFilters();
+  document.getElementById('admin-unpaid-count').textContent=STUDENTS.filter(s=>!s.paid).length;
+  document.getElementById('admin-trainer-count').textContent=TRAINERS.filter(t=>t.active).length;
+}
+function buildDeptGrid(){
+  const grid=document.getElementById('admin-dept-grid');
+  grid.innerHTML=DEPARTMENTS.map(d=>{
+    const p=Math.round(d.students*d.attendance/100);
+    const a=Math.round(d.students*(1-d.attendance/100)*0.6);
+    const l=Math.max(0,d.students-p-a);
+    const ec=d.tag==='petroleum'?'highlight-petroleum':d.tag==='programming'?'highlight-programming':'';
+    const tb=d.tag==='petroleum'?'<span class="dept-badge-petroleum">بترول</span>':d.tag==='programming'?'<span class="dept-badge-programming">برمجة</span>':'';
+    return `<div class="dept-overview-card ${ec}">
+      <div class="dept-overview-name">${d.icon} ${d.name} ${tb}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${d.attendance}%"></div></div>
+        <span style="font-size:0.75rem;font-weight:700;color:var(--blue);flex-shrink:0">${d.attendance}%</span>
       </div>
-      <div>
-        <span>نظام أمني متكامل: تقييد شبكات الورش التدريبية + حفظ البيانات الدائم + ملف كلمات المرور المنفصل (password)</span>
+      <div style="display:flex;gap:8px">
+        <div class="dept-stat-pill p"><i class="fa fa-check"></i> ${p}</div>
+        <div class="dept-stat-pill a"><i class="fa fa-times"></i> ${a}</div>
+        <div class="dept-stat-pill l"><i class="fa fa-clock"></i> ${l}</div>
       </div>
-    </div>
-  </footer>
+      <div style="font-size:0.72rem;color:var(--text-light);margin-top:8px;text-align:center">${d.students} طالب · ${d.trainers} مدرب</div>
+    </div>`;
+  }).join('');
+}
+function buildFinanceTable(filter='all',df='all',search=''){
+  const tbody=document.getElementById('admin-finance-tbody');
+  let list=[...STUDENTS];
+  if(filter==='paid')list=list.filter(s=>s.paid);
+  if(filter==='unpaid')list=list.filter(s=>!s.paid);
+  if(df!=='all')list=list.filter(s=>s.dept==df);
+  if(search)list=list.filter(s=>s.name.includes(search)||s.nid.includes(search));
+  list=list.slice(0,60);
+  tbody.innerHTML=list.map((s,i)=>{
+    const dObj=DEPARTMENTS.find(d=>d.id===s.dept);
+    return `<tr>
+      <td style="color:var(--text-light);font-weight:600">${i+1}</td>
+      <td><strong>${s.name}</strong><br/><span style="font-size:0.72rem;color:var(--text-light);direction:ltr">${s.nid}</span></td>
+      <td style="font-size:0.78rem">${dObj?dObj.icon+' '+dObj.name.substring(0,16):''}</td>
+      <td><strong>${s.amount.toLocaleString()} ج</strong></td>
+      <td><span class="badge ${s.paid?'badge-paid':'badge-unpaid'}">${s.paid?'<i class="fa fa-check-circle"></i> مدفوع':'<i class="fa fa-times-circle"></i> غير مدفوع'}</span></td>
+      <td style="font-size:0.8rem;color:var(--text-light)">${s.paid?s.lastPaid:'—'}</td>
+      <td>${!s.paid?`<button class="btn-sm btn-danger" onclick="sendPaymentAlert(${s.id})"><i class="fa fa-bell"></i> إرسال تنبيه</button>`:`<button class="btn-sm btn-success" onclick="markPaid(${s.id})"><i class="fa fa-check"></i> مدفوع</button>`}</td>
+    </tr>`;
+  }).join('');
+}
+function filterFinance(){ buildFinanceTable(document.getElementById('finance-filter').value,document.getElementById('finance-dept-filter').value,document.getElementById('finance-search').value); }
+function sendPaymentAlert(id){ const stu=STUDENTS.find(s=>s.id===id); if(stu)showToast(`تم إرسال تنبيه المصروفات لأسرة ${stu.name} 📢`,'warning'); }
+function markPaid(id){ const stu=STUDENTS.find(s=>s.id===id); if(stu){ stu.paid=true; showToast(`تم تسجيل دفع ${stu.name} ✓`,'success'); filterFinance(); document.getElementById('admin-unpaid-count').textContent=STUDENTS.filter(s=>!s.paid).length; } }
+function buildTrainersTable(){
+  document.getElementById('admin-trainers-tbody').innerHTML=TRAINERS.map((t,i)=>{
+    const dept=DEPARTMENTS.find(d=>d.id===t.dept);
+    return `<tr><td style="color:var(--text-light);font-weight:600">${i+1}</td><td><strong>${t.name}</strong></td><td style="font-size:0.8rem">${dept?dept.icon+' '+dept.name.substring(0,20):''}</td><td><code style="background:var(--slate);padding:3px 8px;border-radius:4px;font-size:0.82rem">${t.code}</code></td><td><span class="badge ${t.active?'badge-present':'badge-absent'}">${t.active?'<i class="fa fa-circle"></i> نشط':'<i class="fa fa-circle"></i> غير نشط'}</span></td><td><button class="btn-sm btn-primary" onclick="regenCode(${t.id})"><i class="fa fa-sync"></i> إعادة توليد</button></td></tr>`;
+  }).join('');
+}
+function buildDeptsTable(){
+  document.getElementById('admin-depts-tbody').innerHTML=DEPARTMENTS.map((d,i)=>`
+    <tr><td style="color:var(--text-light);font-weight:600">${i+1}</td>
+    <td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.2rem">${d.icon}</span><strong>${d.name}</strong>${d.tag==='petroleum'?'<span class="dept-badge-petroleum">بترول</span>':d.tag==='programming'?'<span class="dept-badge-programming">برمجة</span>':''}</div></td>
+    <td><strong>${d.students}</strong> طالب</td><td><strong>${d.trainers}</strong> مدرب</td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-bar-wrap" style="width:80px"><div class="progress-bar-fill" style="width:${d.attendance}%"></div></div><span style="font-size:0.8rem;font-weight:700;color:var(--blue)">${d.attendance}%</span></div></td>
+    <td><span class="badge badge-present"><i class="fa fa-circle"></i> نشط</span></td></tr>`).join('');
+}
+function buildFullAttendanceTable(df='all',sf='all',search=''){
+  let list=[...STUDENTS];
+  if(df!=='all')list=list.filter(s=>s.dept==df);
+  if(sf!=='all')list=list.filter(s=>s.status===sf);
+  if(search)list=list.filter(s=>s.name.includes(search)||s.nid.includes(search));
+  list=list.slice(0,80);
+  document.getElementById('admin-attendance-tbody').innerHTML=list.map((s,i)=>{
+    const dObj=DEPARTMENTS.find(d=>d.id===s.dept);
+    return `<tr><td style="color:var(--text-light);font-weight:600">${i+1}</td><td><strong>${s.name}</strong></td><td style="font-size:0.78rem;color:var(--text-light);direction:ltr">${s.nid}</td><td style="font-size:0.78rem">${dObj?dObj.icon+' '+dObj.name.substring(0,16):''}</td><td><span class="badge badge-${s.status}">${statusLabel(s.status)}</span></td><td style="font-size:0.8rem;color:var(--text-light)">${s.time}</td><td style="font-size:0.78rem;color:var(--text-mid);max-width:160px">${s.note||'—'}</td></tr>`;
+  }).join('');
+}
+function filterFullAttendance(){ buildFullAttendanceTable(document.getElementById('att-dept-filter').value,document.getElementById('att-status-filter').value,document.getElementById('att-search').value); }
+function populateAdminFilters(){
+  ['finance-dept-filter','att-dept-filter'].forEach(id=>populateDeptFilter(id));
+  const sel=document.getElementById('new-trainer-dept');
+  if(sel){ while(sel.options.length)sel.remove(0); DEPARTMENTS.forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.icon+' '+d.name; sel.appendChild(o); }); }
+}
+function regenCode(id){
+  const t=TRAINERS.find(x=>x.id===id);
+  if(t){ t.code='TR-'+String(Math.floor(Math.random()*900)+100); buildTrainersTable(); showToast(`تم إعادة توليد الكود: ${t.code} للمدرب ${t.name}`,'success'); }
+}
+function openAddTrainer(){ populateAdminFilters(); openInnerModal('modal-add-trainer'); }
+function addTrainer(){
+  const name=document.getElementById('new-trainer-name').value.trim();
+  const dept=document.getElementById('new-trainer-dept').value;
+  if(!name){ showToast('يرجى إدخال اسم المدرب','danger'); return; }
+  const nid=TRAINERS.length+1;
+  const code='TR-'+String(nid).padStart(3,'0');
+  TRAINERS.push({id:nid,name:'م. '+name,dept:parseInt(dept),code,active:true});
+  buildTrainersTable();
+  closeInnerModal('modal-add-trainer');
+  document.getElementById('new-trainer-name').value='';
+  showToast(`تم إضافة المدرب م. ${name} · الكود: ${code}`,'success');
+}
+function openAddDept(){ openInnerModal('modal-add-dept'); }
+function addDept(){
+  const name=document.getElementById('new-dept-name').value.trim();
+  if(!name){ showToast('يرجى إدخال اسم القسم','danger'); return; }
+  const nid=DEPARTMENTS.length+1;
+  DEPARTMENTS.push({id:nid,name,tag:'',icon:'📂',students:0,trainers:0,attendance:0});
+  buildDeptsTable(); buildDeptGrid();
+  closeInnerModal('modal-add-dept');
+  document.getElementById('new-dept-name').value='';
+  showToast(`تم إضافة قسم "${name}" بنجاح ✓`,'success');
+}
 
-  <!-- =========================================================================
-       تحميل ملفات السكربتات البرمجية بالترتيب المعماري الدقيق
-       ========================================================================= -->
-  <!-- 1. ملف كلمات المرور المنفصل (password.js) والفئة الأساسية للأقسام -->
-  <script src="password.js"></script>
-  <script src="departments/department-base.js"></script>
+/* ============ TABS ============ */
+function switchTab(btn,tabId){
+  btn.closest('.section-card').querySelectorAll('.dash-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  btn.closest('.section-card').querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+}
 
-  <!-- 2. موديولات الأقسام التدريبية المنفصلة (Isolated Department Modules) -->
-  <script src="departments/programming.js"></script>
-  <script src="departments/turning-lathe.js"></script>
-  <script src="departments/cnc.js"></script>
-  <script src="departments/electricity-plc.js"></script>
-  <script src="departments/dynamic-department.js"></script>
-
-  <!-- 3. سجل الأقسام والتخزين الدائم والرقابة الأمنية والمصادقة -->
-  <script src="js/department-registry.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/audit-log.js"></script>
-  <script src="js/auth.js"></script>
-
-  <!-- 4. محرك التطبيق الرئيسي والتفاعلات -->
-  <script src="js/app.js"></script>
-
+/* ============ INIT ============ */
+updateDates();
+setInterval(updateDates,60000);
+</script>
 </body>
 </html>

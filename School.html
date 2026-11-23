@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام إدارة مركز التدريب المهني | VTC Industrial Portal</title>
+  
+  <!-- خط Cairo من Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- ملفات التنسيق الصناعية الحديثة -->
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- =========================================================================
+       شريط محاكاة عنوان الـ IP (Simulate Lab IP Toolbar)
+       ========================================================================= -->
+  <aside class="ip-simulator-bar" id="ipSimulatorBar" aria-label="محاكاة عنوان IP للورش والمعامل">
+    <div class="ip-sim-brand">
+      <span class="hazard-icon">⚡</span>
+      <span>محاكي شبكة الورش والمعامل (Network IP Simulator):</span>
+    </div>
+
+    <div class="ip-sim-controls">
+      <div class="ip-sim-input-group">
+        <label for="clientIpInput">IP الجهاز الحالي:</label>
+        <input type="text" id="clientIpInput" class="ip-sim-input" value="192.168.10.25" placeholder="0.0.0.0">
+      </div>
+
+      <!-- أزرار التبديل السريع لعناوين الـ IP المعتمدة وغير المعتمدة -->
+      <button type="button" class="btn-ip-quick active" data-ip="192.168.10.25" title="معمل البرمجة وتطوير الويب">
+        <span>💻 معمل البرمجة (192.168.10.25)</span>
+      </button>
+      <button type="button" class="btn-ip-quick" data-ip="192.168.20.40" title="ورشة الخراطة والتشغيل">
+        <span>⚙️ ورشة الخراطة (192.168.20.40)</span>
+      </button>
+      <button type="button" class="btn-ip-quick" data-ip="192.168.30.55" title="ورشة ماكينات CNC">
+        <span>🎛️ ورشة CNC (192.168.30.55)</span>
+      </button>
+      <button type="button" class="btn-ip-quick" data-ip="192.168.40.70" title="معمل الكهرباء و PLC">
+        <span>⚡ معمل PLC (192.168.40.70)</span>
+      </button>
+      <button type="button" class="btn-ip-quick danger" data-ip="10.0.99.12" title="شبكة منزلية أو خارجية غير مصرحة">
+        <span>🚫 IP خارجي مرفوض (10.0.99.12)</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       شريط التنقل العلوي (Main Navbar)
+       ========================================================================= -->
+  <header class="main-navbar">
+    <a href="#" class="navbar-brand" id="brandHomeLink">
+      <div class="brand-emblem">VTC</div>
+      <div class="brand-text">
+        <h1>مركز التدريب المهني والتقني</h1>
+        <p>منظومة إدارة الأقسام والورش الصناعية | جاهز للتشغيل الفعلي</p>
+      </div>
+    </a>
+
+    <div class="navbar-actions">
+      <!-- مؤشر الحفظ الدائم للبيانات -->
+      <span id="storageStatusBadge" class="dept-meta-pill verified-ip" style="font-size: 0.76rem; padding: 4px 10px;" title="البيانات وكلمات المرور تُحفظ بشكل دائم في ملفات الخادم والقرص">
+        <span>🟢 الحفظ الدائم مفعل (ملفات القرص)</span>
+      </span>
+
+      <!-- تبويبات التنقل السريع -->
+      <nav class="nav-tabs-group" aria-label="أقسام البوابة">
+        <button type="button" class="nav-tab-btn active" id="tabNavLogin" data-target="view-login">
+          <span>تسجيل الدخول</span>
+        </button>
+        <button type="button" class="nav-tab-btn" id="tabNavDashboard" data-target="view-department-dashboard" style="display: none;">
+          <span>لوحة تحكم القسم</span>
+        </button>
+        <button type="button" class="nav-tab-btn" id="tabNavPortal" data-target="view-trainee-parent-portal">
+          <span>بوابة المتدرب وولي الأمر</span>
+        </button>
+        <button type="button" class="nav-tab-btn" id="tabNavAdmin" data-target="view-admin-dashboard" style="display: none;">
+          <span>الإدارة المركزية</span>
+        </button>
+      </nav>
+
+      <!-- شارة المستخدم المسجل وزر الخروج -->
+      <div id="userSessionBadge" class="user-badge-pill" style="display: none;">
+        <span class="status-dot"></span>
+        <span id="sessionUserName">مستخدم مسجل</span>
+        <span id="sessionDeptBadge" class="dept-meta-pill code-pill" style="padding: 2px 6px; font-size: 0.72rem;">—</span>
+      </div>
+
+      <button type="button" id="btnLogout" class="btn-logout" style="display: none;">
+        تسجيل الخروج
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       المحتوى الرئيسي والتنقل بين المشاهد (Views)
+       ========================================================================= -->
+  <main class="main-content">
+
+    <!-- -----------------------------------------------------------------------
+         مشهد 1: تسجيل الدخول الشامل (VIEW LOGIN)
+         ----------------------------------------------------------------------- -->
+    <section id="view-login" class="view-section active">
+      <div class="login-page-grid">
+        
+        <!-- بطاقة تسجيل الدخول وفحص الأمان -->
+        <div class="login-card">
+          
+          <!-- أزرار التبديل بين أنواع تسجيل الدخول -->
+          <div style="display: flex; gap: 6px; margin-bottom: 20px; background: rgba(0,0,0,0.4); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <button type="button" class="nav-tab-btn active" id="tabLoginTypeEngineer" style="flex: 1; text-align: center; justify-content: center; font-size: 0.82rem;">
+              <span>👨‍🏫 مهندسو الأقسام</span>
+            </button>
+            <button type="button" class="nav-tab-btn" id="tabLoginTypeUser" style="flex: 1; text-align: center; justify-content: center; font-size: 0.82rem;">
+              <span>👤 المتدربون / أولياء الأمور</span>
+            </button>
+            <button type="button" class="nav-tab-btn" id="tabLoginTypeAdmin" style="flex: 1; text-align: center; justify-content: center; font-size: 0.82rem;">
+              <span>🏛️ إدارة المركز</span>
+            </button>
+          </div>
+
+          <!-- نموذج 1: تسجيل دخول مهندسي الأقسام (IP مقيد + كلمة مرور) -->
+          <div id="engineerLoginSection">
+            <div class="login-header">
+              <span class="portal-badge">🔒 بوابة دخول مهندسي الورش والمعامل</span>
+              <h2>تسجيل دخول مهندس القسم</h2>
+              <p>تسجيل الدخول بكلمة المرور المخصصة مع التحقق الآلي من تطابق عنوان IP شبكة ورشة القسم.</p>
+            </div>
+
+            <!-- صندوق التنبيه الأمني في حال عدم تطابق عنوان الـ IP (حسب المتطلبات الصارمة) -->
+            <div id="securityAlertBox" class="security-alert-box" role="alert">
+              <div class="alert-hazard-header">
+                <span>⚠️</span>
+                <span>تنبيه أمني صارم - تقييد عنوان الشبكة (IP Restriction)</span>
+              </div>
+              <p class="alert-message-text" id="securityAlertMessage">
+                عذراً، غير مصرح لك بالدخول من هذا الجهاز أو الشبكة (عنوان IP غير مطابق للقسم)
+              </p>
+              <div class="ip-comparison-card">
+                <div class="ip-comparison-item">
+                  <span class="label">عنوان IP المكتشف حالياً:</span>
+                  <span class="ip-value wrong" id="detectedIpDisplay">10.0.99.12</span>
+                </div>
+                <div class="ip-comparison-item">
+                  <span class="label">الـ IP المعتمد لمعمل هذا القسم:</span>
+                  <span class="ip-value expected" id="expectedIpDisplay">192.168.10.25</span>
+                </div>
+              </div>
+            </div>
+
+            <form id="engineerLoginForm" autocomplete="off">
+              <div class="form-group">
+                <label for="loginEmail" class="form-label">البريد الإلكتروني للمهندس:</label>
+                <div class="input-with-icon">
+                  <input type="email" id="loginEmail" class="form-input" placeholder="eng.department@vtc.edu.sa" required value="eng.programming@vtc.edu.sa">
+                  <span class="input-icon">✉️</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="loginPassword" class="form-label">كلمة المرور (المحفوظة في ملف password):</label>
+                <div class="input-with-icon">
+                  <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required value="prog123">
+                  <span class="input-icon">🔑</span>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 24px;">
+                <button type="submit" class="btn-primary" id="btnLoginSubmit">
+                  <span>التحقق والدخول للوحة الورشة</span>
+                  <span>←</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- نموذج 2: تسجيل دخول المستخدمين / المتدربين بكلمة المرور -->
+          <div id="userLoginSection" style="display: none;">
+            <div class="login-header">
+              <span class="portal-badge" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border-color: rgba(14, 165, 233, 0.3);">
+                👤 بوابة دخول المتدربين وأولياء الأمور
+              </span>
+              <h2>تسجيل دخول المتدرب</h2>
+              <p>أدخل كود المتدرب أو رقم الهوية وكلمة المرور المحفوظة في ملف <code>password</code> للدخول لسجلك المهني.</p>
+            </div>
+
+            <form id="userLoginForm" autocomplete="off">
+              <div class="form-group">
+                <label for="userLoginCode" class="form-label">كود المتدرب الأكاديمي أو رقم الهوية:</label>
+                <div class="input-with-icon">
+                  <input type="text" id="userLoginCode" class="form-input" placeholder="مثال: PRG-101 أو رقم الهوية" required value="PRG-101">
+                  <span class="input-icon">🎓</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="userLoginPassword" class="form-label">كلمة المرور للمستخدم (Password):</label>
+                <div class="input-with-icon">
+                  <input type="password" id="userLoginPassword" class="form-input" placeholder="••••••••" required value="user101">
+                  <span class="input-icon">🔑</span>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 24px;">
+                <button type="submit" class="btn-primary" id="btnUserLoginSubmit" style="background: linear-gradient(135deg, #0284c7, #38bdf8); color: #fff;">
+                  <span>تسجيل دخول المتدرب وعرض السجل</span>
+                  <span>←</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- نموذج 3: تسجيل دخول الإدارة المركزية بكلمة المرور -->
+          <div id="adminLoginSection" style="display: none;">
+            <div class="login-header">
+              <span class="portal-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);">
+                🏛️ بوابة الإدارة المركزية الشاملة
+              </span>
+              <h2>تسجيل دخول إدارة المركز</h2>
+              <p>صلاحيات متقدمة لإدارة كافة الأقسام، إنشاء ورش جديدة، والوصول لملف كلمات المرور وقاعدة البيانات.</p>
+            </div>
+
+            <form id="adminLoginForm" autocomplete="off">
+              <div class="form-group">
+                <label for="adminEmail" class="form-label">البريد الإلكتروني الإداري:</label>
+                <div class="input-with-icon">
+                  <input type="email" id="adminEmail" class="form-input" placeholder="admin@vtc.edu.sa" required value="admin@vtc.edu.sa">
+                  <span class="input-icon">✉️</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="adminPassword" class="form-label">كلمة مرور الإدارة:</label>
+                <div class="input-with-icon">
+                  <input type="password" id="adminPassword" class="form-input" placeholder="••••••••" required value="admin123">
+                  <span class="input-icon">🔑</span>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 24px;">
+                <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: #fff;">
+                  <span>دخول لوحة التحكم المركزية</span>
+                  <span>←</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- بطاقة الدخول السريع وتجربة الـ IP وكلمات المرور للمراجع والمختبر -->
+        <div class="quick-test-panel">
+          <h3>
+            <span>🧪</span>
+            <span>لوحة الاختبار السريع (حسابات وكلمات المرور من ملف password)</span>
+          </h3>
+          <p class="guide-desc">
+            جميع كلمات المرور محفوظة في ملف منفصل باسم <code>password</code> وقابلة للتعديل والحفظ الدائم:
+          </p>
+
+          <div class="demo-account-list">
+            <!-- حسابات المهندسين -->
+            <div class="demo-account-card">
+              <div class="account-info">
+                <span class="name">م. أحمد النجار (البرمجة)</span>
+                <span class="dept-name">كلمة المرور: <code>prog123</code> | IP: <code>192.168.10.25</code></span>
+              </div>
+              <div class="account-actions">
+                <button type="button" class="btn-fill-valid" data-email="eng.programming@vtc.edu.sa" data-pass="prog123" data-ip="192.168.10.25">
+                  ✓ دخول سليم
+                </button>
+                <button type="button" class="btn-fill-invalid" data-email="eng.programming@vtc.edu.sa" data-pass="prog123" data-ip="10.0.99.12">
+                  ✗ IP مرفوض
+                </button>
+              </div>
+            </div>
+
+            <div class="demo-account-card">
+              <div class="account-info">
+                <span class="name">م. محمود عبد الرحمن (الخراطة)</span>
+                <span class="dept-name">كلمة المرور: <code>turn123</code> | IP: <code>192.168.20.40</code></span>
+              </div>
+              <div class="account-actions">
+                <button type="button" class="btn-fill-valid" data-email="eng.turning@vtc.edu.sa" data-pass="turn123" data-ip="192.168.20.40">
+                  ✓ دخول سليم
+                </button>
+                <button type="button" class="btn-fill-invalid" data-email="eng.turning@vtc.edu.sa" data-pass="turn123" data-ip="172.16.5.99">
+                  ✗ IP مرفوض
+                </button>
+              </div>
+            </div>
+
+            <!-- حسابات المتدربين (Users Password Logins) -->
+            <div class="demo-account-card" style="border-color: rgba(56, 189, 248, 0.3);">
+              <div class="account-info">
+                <span class="name">👤 فيصل الشمري (متدرب البرمجة)</span>
+                <span class="dept-name">كود: <code>PRG-101</code> | كلمة المرور: <code>user101</code></span>
+              </div>
+              <div class="account-actions">
+                <button type="button" class="btn-fill-user" data-user-code="PRG-101" data-user-pass="user101" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #0284c7; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+                  دخول المتدرب
+                </button>
+              </div>
+            </div>
+
+            <div class="demo-account-card" style="border-color: rgba(56, 189, 248, 0.3);">
+              <div class="account-info">
+                <span class="name">👤 سلطان الحربي (متدرب الخراطة)</span>
+                <span class="dept-name">كود: <code>LAT-201</code> | كلمة المرور: <code>user201</code></span>
+              </div>
+              <div class="account-actions">
+                <button type="button" class="btn-fill-user" data-user-code="LAT-201" data-user-pass="user201" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #0284c7; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+                  دخول المتدرب
+                </button>
+              </div>
+            </div>
+
+            <!-- حساب الإدارة -->
+            <div class="demo-account-card" style="border-color: rgba(59, 130, 246, 0.3);">
+              <div class="account-info">
+                <span class="name">🏛️ مدير المركز (Admin)</span>
+                <span class="dept-name">البريد: <code>admin@vtc.edu.sa</code> | كلمة المرور: <code>admin123</code></span>
+              </div>
+              <div class="account-actions">
+                <button type="button" class="btn-fill-admin" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+                  دخول الإدارة
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- -----------------------------------------------------------------------
+         مشهد 2: لوحة تحكم القسم التدريبي (DEPARTMENT DASHBOARD)
+         ----------------------------------------------------------------------- -->
+    <section id="view-department-dashboard" class="view-section">
+      
+      <!-- ترويسة القسم ومعلومات الورشة والـ IP المصادق -->
+      <div class="dept-header-banner">
+        <div class="dept-title-group">
+          <h2>
+            <span id="deptHeaderIcon">⚙️</span>
+            <span id="deptHeaderName">البرمجة وتطوير الويب</span>
+          </h2>
+          <p id="deptHeaderDesc">تأهيل الكوادر الفنية على تطوير تطبيقات الويب التفاعلية، بناء قواعد البيانات وتأمين بيئات البرمجيات.</p>
+          
+          <div class="dept-meta-badges">
+            <span class="dept-meta-pill code-pill" id="deptCodePill">LAB-IT-101</span>
+            <span class="dept-meta-pill verified-ip" id="deptIpPill">
+              <span>🔒 اتصال شبكي آمن مصرح به (IP: 192.168.10.25)</span>
+            </span>
+            <span class="dept-meta-pill" id="deptBuildingPill">
+              <span>📍 المبنى الرئيسي - معمل 204</span>
+            </span>
+            <span class="dept-meta-pill" id="deptSupervisorPill">
+              <span>👨‍🏫 المشرف: م. أحمد النجار</span>
+            </span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button type="button" class="btn-primary" id="btnOpenAddTraineeModal" style="padding: 10px 18px; font-size: 0.9rem;">
+            <span>+ إضافة متدرب للقسم</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- إحصاءات القسم السريعة -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-label">إجمالي متدربي القسم</div>
+            <div class="stat-value" id="statTotalTrainees">0</div>
+          </div>
+          <div class="stat-icon" style="color: var(--amber-400);">👥</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-label">نسبة حضور اليوم</div>
+            <div class="stat-value" id="statTodayAttendanceRate">0%</div>
+          </div>
+          <div class="stat-icon" style="color: var(--status-success);">📅</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-label">متوسط التقييم العملي</div>
+            <div class="stat-value" id="statAvgPractical">0/100</div>
+          </div>
+          <div class="stat-icon" style="color: var(--navy-500);">🛠️</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-label">الالتزام بالسلامة المهنية (PPE)</div>
+            <div class="stat-value" id="statAvgSafety">0%</div>
+          </div>
+          <div class="stat-icon" style="color: var(--orange-500);">🦺</div>
+        </div>
+      </div>
+
+      <!-- تبويبات لوحة القسم الداخلي -->
+      <div class="dashboard-subnav">
+        <button type="button" class="subnav-btn active" data-subview="subview-attendance">
+          <span>📋 سجل الحضور والغياب اليومي</span>
+        </button>
+        <button type="button" class="subnav-btn" data-subview="subview-evaluations">
+          <span>⭐ تقييم الأداء العملي والملاحظات</span>
+        </button>
+        <button type="button" class="subnav-btn" data-subview="subview-equipment">
+          <span>⚙️ جاهزية ماكينات ومعدات الورشة</span>
+        </button>
+      </div>
+
+      <!-- تبويب فرعي 1: الحضور والغياب -->
+      <div id="subview-attendance" class="subview-content">
+        <div class="attendance-toolbar">
+          <div class="date-selector-group">
+            <label for="attendanceDatePicker">تاريخ الحضور:</label>
+            <input type="date" id="attendanceDatePicker" class="date-input">
+          </div>
+
+          <div class="bulk-actions-group">
+            <button type="button" class="btn-secondary" id="btnMarkAllPresent">
+              <span>تسجيل الكل حاضر ✓</span>
+            </button>
+            <button type="button" class="btn-secondary" id="btnResetDayAttendance">
+              <span>إعادة تعيين اليوم</span>
+            </button>
+            <button type="button" class="btn-primary" id="btnSaveAttendance" style="padding: 8px 16px; font-size: 0.88rem;">
+              <span>💾 حفظ دائم لسجل الحضور</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- جدول الحضور والغياب لمتدربي القسم حصراً -->
+        <div class="table-responsive">
+          <table class="industrial-table" id="attendanceTable">
+            <thead>
+              <tr>
+                <th style="width: 60px;">#</th>
+                <th>كود المتدرب</th>
+                <th>اسم المتدرب</th>
+                <th>المجموعة / المستوى</th>
+                <th>حالة الحضور اليوم</th>
+                <th>إجمالي نسبة الحضور</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceTableBody">
+              <!-- يتم ملؤها ديناميكياً بواسطة app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- تبويب فرعي 2: تقييم الأداء والملاحظات -->
+      <div id="subview-evaluations" class="subview-content" style="display: none;">
+        <div class="table-responsive">
+          <table class="industrial-table" id="evaluationsTable">
+            <thead>
+              <tr>
+                <th>كود المتدرب</th>
+                <th>اسم المتدرب</th>
+                <th>الدرجة العملية الموزونة</th>
+                <th>مستوى السلامة المهنية</th>
+                <th>آخر ملاحظة مسجلة</th>
+                <th>إجراء التقييم</th>
+              </tr>
+            </thead>
+            <tbody id="evaluationsTableBody">
+              <!-- يتم ملؤها ديناميكياً -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- تبويب فرعي 3: جاهزية المعدات والماكينات -->
+      <div id="subview-equipment" class="subview-content" style="display: none;">
+        <div class="table-responsive">
+          <table class="industrial-table" id="equipmentTable">
+            <thead>
+              <tr>
+                <th>كود المعدة</th>
+                <th>اسم الماكينة / محطة العمل</th>
+                <th>المواصفات الفنية</th>
+                <th>الحالة التشغيلية</th>
+                <th>فحص السلامة الدوري</th>
+              </tr>
+            </thead>
+            <tbody id="equipmentTableBody">
+              <!-- يتم ملؤها ديناميكياً -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- -----------------------------------------------------------------------
+         مشهد 3: بوابة المتدرب وولي الأمر بكلمة المرور (VIEW TRAINEE / PARENT PORTAL)
+         ----------------------------------------------------------------------- -->
+    <section id="view-trainee-parent-portal" class="view-section">
+      
+      <!-- نموذج تسجيل دخول المتدرب / المستخدم بكلمة المرور -->
+      <div id="portalUserLoginHero" class="portal-search-hero">
+        <span class="dept-meta-pill code-pill" style="margin-bottom: 12px; display: inline-flex;">بوابة المتابعة الآمنة للمتدربين وأولياء الأمور</span>
+        <h2>تسجيل دخول المتدرب بكلمة المرور</h2>
+        <p>يجب إدخال كود المتدرب أو رقم الهوية وكلمة المرور للتحقق من هوية المتدرب وعرض تقارير الحضور والتقييمات المعتمدة.</p>
+
+        <form id="portalLoginForm" class="search-box-wrapper" style="max-width: 720px; flex-wrap: wrap;" autocomplete="off">
+          <input type="text" id="portalInputCode" class="search-box-input" placeholder="كود المتدرب أو الهوية (مثلاً PRG-101)..." required style="flex: 1 1 200px;">
+          <input type="password" id="portalInputPassword" class="search-box-input" placeholder="كلمة المرور (مثلاً user101)..." required style="flex: 1 1 180px;">
+          <button type="submit" class="btn-search" style="flex: 0 0 auto;">
+            <span>دخول آمن</span>
+            <span>🔒</span>
+          </button>
+        </form>
+
+        <!-- روابط سريعة لمتدربين نموذجيين مع كلمات المرور -->
+        <div class="quick-trainee-selector">
+          <span>حسابات متدربين نموذجية بكلمات المرور:</span>
+          <button type="button" class="btn-ip-quick" data-code="PRG-101" data-pass="user101">فيصل الشمري (PRG-101 / user101)</button>
+          <button type="button" class="btn-ip-quick" data-code="LAT-201" data-pass="user201">سلطان الحربي (LAT-201 / user201)</button>
+          <button type="button" class="btn-ip-quick" data-code="CNC-301" data-pass="user301">عبدالله القاسم (CNC-301 / user301)</button>
+          <button type="button" class="btn-ip-quick" data-code="PLC-401" data-pass="user401">حاتم الرويلي (PLC-401 / user401)</button>
+        </div>
+      </div>
+
+      <!-- شريط معلومات المتدرب المسجل حالياً -->
+      <div id="portalActiveUserBar" style="display: none; background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); padding: 12px 20px; border-radius: var(--radius-md); margin-bottom: 20px; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.2rem;">👤</span>
+          <span>جلسة المتدرب النشطة: <strong id="portalActiveUserName" style="color: #fff;">—</strong> (<span id="portalActiveUserCode" style="color: var(--amber-400); font-family: monospace;">—</span>)</span>
+        </div>
+        <div>
+          <button type="button" class="btn-secondary" id="btnPortalLogout" style="font-size: 0.8rem; padding: 4px 12px;">
+            تسجيل خروج المتدرب
+          </button>
+        </div>
+      </div>
+
+      <!-- حاوية تقرير المتدرب الشامل (تظهر بعد تسجيل الدخول بكلمة المرور) -->
+      <div id="traineeReportContainer" class="trainee-report-container">
+        
+        <!-- ترويسة رسمية للطباعة فقط -->
+        <div class="print-official-header" style="display: none;">
+          <h1>مركز التدريب المهني والتقني - بطاقة تقييم الأداء العملي</h1>
+          <p>تقرير رسمي معتمد صادر من إدارة الورش الهندسية وشؤون المتدربين</p>
+        </div>
+
+        <!-- بطاقة بيانات المتدرب الأساسية -->
+        <div class="trainee-profile-card">
+          <div class="profile-card-header">
+            <div class="trainee-main-details">
+              <div class="trainee-avatar-box" id="repAvatar">👤</div>
+              <div class="trainee-title">
+                <h3 id="repName">اسم المتدرب</h3>
+                <div class="meta">
+                  <span>الرقم الأكاديمي: <strong id="repCode" style="color: var(--amber-400);">—</strong></span>
+                  <span>الهوية: <strong id="repNationalId">—</strong></span>
+                  <span>القسم: <strong id="repDepartment">—</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+              <button type="button" class="btn-secondary btn-print-report" id="btnPrintReport">
+                <span>🖨️ طباعة التقرير الفني</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- صف مؤشرات الأداء والغياب -->
+          <div class="report-stats-row">
+            <div class="report-gauge-card">
+              <div class="gauge-label">نسبة الحضور التراكمية</div>
+              <div class="gauge-val" id="repAttendanceRate">0%</div>
+              <div style="font-size: 0.75rem; color: var(--slate-400);" id="repAttendanceCounts">0 حاضر | 0 متأخر | 0 غائب</div>
+            </div>
+
+            <div class="report-gauge-card">
+              <div class="gauge-label">معدل المهارة العملية</div>
+              <div class="gauge-val" id="repPracticalScore" style="color: #38bdf8;">0/100</div>
+              <div style="font-size: 0.75rem; color: var(--slate-400);">تنفيذ المهام والمخططات</div>
+            </div>
+
+            <div class="report-gauge-card">
+              <div class="gauge-label">مؤشر السلامة المهنية (PPE)</div>
+              <div class="gauge-val" id="repSafetyScore" style="color: var(--status-success);">0%</div>
+              <div style="font-size: 0.75rem; color: var(--slate-400);">التزام تام بمعدات الحماية</div>
+            </div>
+
+            <div class="report-gauge-card">
+              <div class="gauge-label">الدرجة الكلية الموزونة</div>
+              <div class="gauge-val" id="repTotalScore">0/100</div>
+              <div style="font-size: 0.75rem; color: var(--slate-400);">تقييم فني شامل</div>
+            </div>
+          </div>
+
+          <!-- تفاصيل الاتصال وإجراءات الطوارئ -->
+          <div style="background: rgba(0,0,0,0.3); padding: 14px 18px; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--slate-300); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+            <div><strong>رقم جوال المتدرب:</strong> <span id="repPhone">—</span></div>
+            <div><strong>ولي الأمر:</strong> <span id="repGuardianName">—</span> (<span id="repGuardianPhone">—</span>)</div>
+            <div><strong>تاريخ الالتحاق:</strong> <span id="repEnrollDate">—</span></div>
+            <div><strong>المجموعة التدريبية:</strong> <span id="repGroup">—</span></div>
+          </div>
+          
+          <div style="margin-top: 10px; padding: 10px 14px; background: rgba(234, 88, 12, 0.08); border-right: 3px solid var(--orange-500); border-radius: var(--radius-sm); font-size: 0.82rem; color: var(--slate-300);">
+            <strong>ملاحظات السلامة الطبية والورشة:</strong> <span id="repSafetyNotes">—</span>
+          </div>
+        </div>
+
+        <!-- سجل التقييمات العملية والملاحظات السلوكية والفنية -->
+        <div class="evaluation-history-section">
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 8px;">
+            سجل التقييمات العملية والملاحظات المعتمدة من مهندس القسم
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--slate-400); margin-bottom: 16px;">
+            تفاصيل أداء المتدرب في الورش والمشاريع العملية متضمنة ملاحظات التميز وتنبيهات السلامة المهنية.
+          </p>
+
+          <div class="eval-timeline" id="repEvalTimeline">
+            <!-- يتم إنشاؤها ديناميكياً -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- -----------------------------------------------------------------------
+         مشهد 4: لوحة الإدارة المركزية (VIEW ADMIN DASHBOARD)
+         ----------------------------------------------------------------------- -->
+    <section id="view-admin-dashboard" class="view-section">
+      <div class="admin-grid">
+
+        <!-- بطاقة إدارة قاعدة البيانات وملف كلمات المرور الدائم -->
+        <div class="admin-section-card" style="border-right: 4px solid var(--status-success);">
+          <div class="admin-card-header">
+            <h3>
+              <span>💾</span>
+              <span>نظام الحفظ الدائم وقاعدة البيانات وملف كلمات المرور</span>
+            </h3>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-primary" id="btnExportPermanentBackup" style="padding: 6px 14px; font-size: 0.82rem;">
+                <span>تصدير نسخة كاملة (JSON Backup)</span>
+              </button>
+              <button type="button" class="btn-secondary" id="btnResetAllDefaults" style="padding: 6px 14px; font-size: 0.82rem; color: #f87171;">
+                <span>استعادة البيانات الافتراضية</span>
+              </button>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; font-size: 0.85rem; color: var(--slate-300);">
+            <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              <div style="color: var(--amber-400); font-weight: 700; margin-bottom: 4px;">📂 ملف قاعدة البيانات الدائمة:</div>
+              <code style="color: #6ee7b7; font-family: monospace;">data/vtc_data.json</code>
+              <div style="font-size: 0.78rem; color: var(--slate-400); margin-top: 4px;">يحتوي على كافة سجلات الحضور والغياب، المتدربين، التقييمات، والورش.</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              <div style="color: var(--amber-400); font-weight: 700; margin-bottom: 4px;">🔑 ملف كلمات المرور المنفصل:</div>
+              <code style="color: #6ee7b7; font-family: monospace;">password</code>
+              <div style="font-size: 0.78rem; color: var(--slate-400); margin-top: 4px;">يحتوي على كافة كلمات مرور الإدارة، مهندسي الورش، وجميع المتدربين (Users).</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- إدارة الأقسام التدريبية وإضافة قسم جديد ديناميكياً -->
+        <div class="admin-section-card">
+          <div class="admin-card-header">
+            <h3>
+              <span>🏢</span>
+              <span>الأقسام التدريبية المعتمدة بالمركز</span>
+            </h3>
+            <button type="button" class="btn-primary" id="btnOpenAddDepartmentModal" style="padding: 8px 16px; font-size: 0.88rem;">
+              <span>+ إضافة قسم تدريبي جديد</span>
+            </button>
+          </div>
+
+          <p style="font-size: 0.85rem; color: var(--slate-400); margin-bottom: 18px;">
+            لكل قسم تدريبي رمز ورشة خاص وعنوان IP مصرح به لشبكته المحلية وكلمة مرور مخصصة تُحفظ في ملف <code>password</code>.
+          </p>
+
+          <div class="departments-manage-grid" id="adminDepartmentsList">
+            <!-- تملأ ديناميكياً -->
+          </div>
+        </div>
+
+        <!-- سجل الرقابة والأمان (Audit Log) لمحاولات الدخول وحالات الـ IP المحظورة -->
+        <div class="admin-section-card">
+          <div class="admin-card-header">
+            <h3>
+              <span>🛡️</span>
+              <span>سجل الأمان والرقابة الشبكية (Security & IP Audit Trail)</span>
+            </h3>
+            <button type="button" class="btn-secondary" id="btnClearAuditLog" style="font-size: 0.78rem; padding: 4px 10px;">
+              <span>تفريغ السجل</span>
+            </button>
+          </div>
+
+          <p style="font-size: 0.85rem; color: var(--slate-400); margin-bottom: 14px;">
+            سجل حي يوثق كل محاولة دخول، ومطابقة الـ IP، وفحص كلمات المرور الصادرة ضد الشبكات غير المصرحة.
+          </p>
+
+          <div class="table-responsive">
+            <table class="industrial-table" id="auditLogTable">
+              <thead>
+                <tr>
+                  <th>وقت المحاولة</th>
+                  <th>المستخدم / المهندس</th>
+                  <th>القسم المستهدف</th>
+                  <th>الـ IP المصرح</th>
+                  <th>الـ IP المستخدم</th>
+                  <th>نتيجة الفحص الأمني</th>
+                </tr>
+              </thead>
+              <tbody id="auditLogTableBody">
+                <!-- تملأ ديناميكياً -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       النوافذ المنبثقة (Modals)
+       ========================================================================= -->
+
+  <!-- نافذة 1: إضافة متدرب جديد للقسم مع تعيين كلمة المرور -->
+  <div class="modal-overlay" id="modalAddTrainee">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>إضافة متدرب جديد وتعيين كلمة المرور</h3>
+        <button type="button" class="modal-close-btn" data-close="modalAddTrainee">&times;</button>
+      </div>
+      <form id="formAddTrainee">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="newTraineeName" class="form-label">اسم المتدرب الرباعي:</label>
+            <input type="text" id="newTraineeName" class="form-input" placeholder="مثال: سلمان بن فهد التميمي" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="newTraineeNationalId" class="form-label">رقم الهوية الوطنية / الإقامة:</label>
+              <input type="text" id="newTraineeNationalId" class="form-input" placeholder="10xxxxxxxx" maxlength="10" required>
+            </div>
+            <div class="form-group">
+              <label for="newTraineePhone" class="form-label">رقم جوال المتدرب:</label>
+              <input type="tel" id="newTraineePhone" class="form-input" placeholder="05xxxxxxxx" required>
+            </div>
+          </div>
+
+          <!-- حقل كلمة المرور للمستخدم لحفظها في ملف password -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="newTraineePassword" class="form-label">كلمة مرور دخول المتدرب (Password):</label>
+              <input type="password" id="newTraineePassword" class="form-input" placeholder="••••••••" value="user123" required>
+              <small style="font-size: 0.72rem; color: var(--amber-400);">تُحفظ تلقائياً في ملف password المنفصل</small>
+            </div>
+            <div class="form-group">
+              <label for="newTraineeGroup" class="form-label">المجموعة التدريبية / المستوى:</label>
+              <input type="text" id="newTraineeGroup" class="form-input" placeholder="المجموعة أ (تأسيسي)" value="المجموعة أ (تأسيسي)">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="newGuardianName" class="form-label">اسم ولي الأمر / جهة الاتصال للطوارئ:</label>
+              <input type="text" id="newGuardianName" class="form-input" placeholder="اسم ولي الأمر" required>
+            </div>
+            <div class="form-group">
+              <label for="newGuardianPhone" class="form-label">جوال ولي الأمر للطوارئ:</label>
+              <input type="tel" id="newGuardianPhone" class="form-input" placeholder="05xxxxxxxx" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="newTraineeSafety" class="form-label">ملاحظات السلامة والاعتبارات الصحية:</label>
+            <textarea id="newTraineeSafety" class="form-input" rows="2" placeholder="أي حالات صحية أو متطلبات وقاية شخصية خاصة...">سليم طبياً - جاهز للعمل والتدريب بالورشة</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" data-close="modalAddTrainee">إلغاء</button>
+          <button type="submit" class="btn-primary" style="width: auto;">حفظ دائم وتسجيل المتدرب</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 2: تقييم الأداء العملي والملاحظات -->
+  <div class="modal-overlay" id="modalEvaluateTrainee">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>تقييم الأداء العملي والسلامة المهنية</h3>
+        <button type="button" class="modal-close-btn" data-close="modalEvaluateTrainee">&times;</button>
+      </div>
+      <form id="formEvaluateTrainee">
+        <input type="hidden" id="evalTraineeId">
+        <div class="modal-body">
+          <div style="background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+            <div style="font-weight: 800; color: #fff;" id="evalModalTraineeName">اسم المتدرب</div>
+            <div style="font-size: 0.8rem; color: var(--amber-400);" id="evalModalTraineeCode">كود المتدرب</div>
+          </div>
+
+          <div class="form-group">
+            <label for="evalTitle" class="form-label">عنوان التمرين / المهمة العملية:</label>
+            <input type="text" id="evalTitle" class="form-input" placeholder="مثال: تنفيذ مشروع تشغيل واختبار لوحة تحكم" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="evalPracticalScore" class="form-label">المهارة العملية وجودة التنفيذ (40%):</label>
+              <input type="number" id="evalPracticalScore" class="form-input" min="0" max="100" value="90" required>
+            </div>
+            <div class="form-group">
+              <label for="evalSafetyScore" class="form-label">الالتزام بالسلامة وارتداء PPE (30%):</label>
+              <input type="number" id="evalSafetyScore" class="form-input" min="0" max="100" value="95" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="evalMaintenanceScore" class="form-label">صيانة ونظافة محطة العمل (15%):</label>
+              <input type="number" id="evalMaintenanceScore" class="form-input" min="0" max="100" value="90" required>
+            </div>
+            <div class="form-group">
+              <label for="evalTheoryScore" class="form-label">الفهم النظري والمخططات (15%):</label>
+              <input type="number" id="evalTheoryScore" class="form-input" min="0" max="100" value="85" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="evalNoteType" class="form-label">نوع الملاحظة:</label>
+            <select id="evalNoteType" class="form-input">
+              <option value="technical">ملاحظة فنية وتقنية (Technical Note)</option>
+              <option value="excellence">إشادة وتميز عملي (Commendation)</option>
+              <option value="safety">تنبيه سلامة مهنية (Safety Warning)</option>
+              <option value="disciplinary">ملاحظة سلوكية وانضباطية (Disciplinary)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="evalNotes" class="form-label">نص الملاحظات والتوصيات المهنية:</label>
+            <textarea id="evalNotes" class="form-input" rows="3" placeholder="اكتب الملاحظات والتوجيهات الفنية للمتدرب..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" data-close="modalEvaluateTrainee">إلغاء</button>
+          <button type="submit" class="btn-primary" style="width: auto;">اعتماد وحفظ التقييم الدائم</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 3: إضافة قسم تدريبي جديد ديناميكياً (للإدارة) -->
+  <div class="modal-overlay" id="modalAddDepartment">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>إضافة قسم تدريبي وورشة هندسية جديدة</h3>
+        <button type="button" class="modal-close-btn" data-close="modalAddDepartment">&times;</button>
+      </div>
+      <form id="formAddDepartment">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="newDeptName" class="form-label">اسم القسم التدريبي:</label>
+            <input type="text" id="newDeptName" class="form-input" placeholder="مثال: لحام وتشكيل المعادن" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="newDeptCode" class="form-label">رمز الورشة / المعمل:</label>
+              <input type="text" id="newDeptCode" class="form-input" placeholder="مثال: WRK-WELD-505" required>
+            </div>
+            <div class="form-group">
+              <label for="newDeptAuthorizedIp" class="form-label">عنوان IP المصرح به لشبكة القسم:</label>
+              <input type="text" id="newDeptAuthorizedIp" class="form-input" placeholder="مثال: 192.168.50.80" value="192.168.50.80" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="newDeptEngName" class="form-label">اسم المهندس المشرف:</label>
+              <input type="text" id="newDeptEngName" class="form-input" placeholder="م. خالد الشريف" required>
+            </div>
+            <div class="form-group">
+              <label for="newDeptEngEmail" class="form-label">البريد الإلكتروني للدخول:</label>
+              <input type="email" id="newDeptEngEmail" class="form-input" placeholder="eng.welding@vtc.edu.sa" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="newDeptEngPass" class="form-label">كلمة المرور (تُحفظ في ملف password):</label>
+              <input type="password" id="newDeptEngPass" class="form-input" placeholder="••••••••" value="weld123" required>
+            </div>
+            <div class="form-group">
+              <label for="newDeptCapacity" class="form-label">الطاقة الاستيعابية للورشة:</label>
+              <input type="number" id="newDeptCapacity" class="form-input" value="20" min="5" max="50">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="newDeptDesc" class="form-label">وصف القسم والمهارات المستهدفة:</label>
+            <textarea id="newDeptDesc" class="form-input" rows="2" placeholder="وصف موجز للمهارات التي يكتسبها المتدربون في هذه الورشة...">تدريب متخصص على عمليات اللحام بالقوس الكهربائي وغاز الأرجون TIG/MIG وقراءة المخططات الفنية ومعايير السلامة المهنية.</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" data-close="modalAddDepartment">إلغاء</button>
+          <button type="submit" class="btn-primary" style="width: auto;">إنشاء وتفعيل وحفظ القسم</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- حاوية إشعارات Toast التفاعلية -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- تذييل الصفحة -->
+  <footer class="main-footer">
+    <div class="footer-content">
+      <div>
+        <strong>نظام إدارة مركز التدريب المهني</strong> | جاهز للاستخدام الفعلي &copy; 2026
+      </div>
+      <div>
+        <span>نظام أمني متكامل: تقييد شبكات الورش التدريبية + حفظ البيانات الدائم + ملف كلمات المرور المنفصل (password)</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+       تحميل ملفات السكربتات البرمجية بالترتيب المعماري الدقيق
+       ========================================================================= -->
+  <!-- 1. ملف كلمات المرور المنفصل (password.js) والفئة الأساسية للأقسام -->
+  <script src="password.js"></script>
+  <script src="departments/department-base.js"></script>
+
+  <!-- 2. موديولات الأقسام التدريبية المنفصلة (Isolated Department Modules) -->
+  <script src="departments/programming.js"></script>
+  <script src="departments/turning-lathe.js"></script>
+  <script src="departments/cnc.js"></script>
+  <script src="departments/electricity-plc.js"></script>
+  <script src="departments/dynamic-department.js"></script>
+
+  <!-- 3. سجل الأقسام والتخزين الدائم والرقابة الأمنية والمصادقة -->
+  <script src="js/department-registry.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audit-log.js"></script>
+  <script src="js/auth.js"></script>
+
+  <!-- 4. محرك التطبيق الرئيسي والتفاعلات -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>
